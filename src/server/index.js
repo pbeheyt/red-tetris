@@ -1,60 +1,68 @@
-import fs  from 'fs'
+import http from 'http'
+import express from 'express'
+import { Server } from 'socket.io'
 import debug from 'debug'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
 const logerror = debug('tetris:error')
-  , loginfo = debug('tetris:info')
+const loginfo = debug('tetris:info')
 
-const initApp = (app, params, cb) => {
-  const {host, port} = params
-  const handler = (req, res) => {
-    const file = req.url === '/bundle.js' ? '/../../build/bundle.js' : '/../../index.html'
-    fs.readFile(__dirname + file, (err, data) => {
-      if (err) {
-        logerror(err)
-        res.writeHead(500)
-        return res.end('Error loading index.html')
-      }
-      res.writeHead(200)
-      res.end(data)
-    })
-  }
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
-  app.on('request', handler)
-
-  app.listen({host, port}, () =>{
-    loginfo(`tetris listen on ${params.url}`)
-    cb()
-  })
-}
-
-const initEngine = io => {
-  io.on('connection', function(socket){
-    loginfo("Socket connected: " + socket.id)
+const initEngine = (io) => {
+  io.on('connection', (socket) => {
+    loginfo(`Socket connected: ${socket.id}`)
     socket.on('action', (action) => {
-      if(action.type === 'server/ping'){
-        socket.emit('action', {type: 'pong'})
+      if (action.type === 'server/ping') {
+        socket.emit('action', { type: 'pong' })
       }
+    })
+    socket.on('disconnect', () => {
+      loginfo(`Socket disconnected: ${socket.id}`)
     })
   })
 }
 
-export function create(params){
-  const promise = new Promise( (resolve, reject) => {
-    const app = require('http').createServer()
-    initApp(app, params, () =>{
-      const io = require('socket.io')(app)
+export const start = (params) => {
+  return new Promise((resolve, reject) => {
+    const app = express()
+    const server = http.createServer(app)
+    const io = new Server(server, {
+      cors: {
+        origin: '*', // Adjust for production
+        methods: ['GET', 'POST'],
+      },
+    })
+
+    initEngine(io)
+
+    // Serve static files from the Vite build output in production
+    if (process.env.NODE_ENV === 'production') {
+      const clientBuildPath = path.join(__dirname, '../../dist')
+      app.use(express.static(clientBuildPath))
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(clientBuildPath, 'index.html'))
+      })
+    }
+
+    server.listen(params.port, params.host, () => {
+      loginfo(`Server listening on ${params.url}`)
+
       const stop = (cb) => {
         io.close()
-        app.close( () => {
-          app.unref()
+        server.close(() => {
+          server.unref()
+          loginfo('Server stopped.')
+          if (cb) cb()
         })
-        loginfo(`Engine stopped.`)
-        cb()
       }
 
-      initEngine(io)
-      resolve({stop})
+      resolve({ stop })
+    }).on('error', (err) => {
+      logerror(err)
+      reject(err)
     })
   })
-  return promise
 }

@@ -8,31 +8,11 @@
 ├── README.md
 ├── src
 │   ├── client
-│   │   ├── actions
-│   │   │   ├── alert.js
-│   │   │   └── server.js
-│   │   ├── components
-│   │   │   └── test.js
-│   │   ├── containers
-│   │   │   └── app.js
-│   │   ├── index.js
-│   │   ├── middleware
-│   │   │   └── storeStateMiddleWare.js
-│   │   └── reducers
-│   │       ├── alert.js
-│   │       └── index.js
+│   │   ├── App.vue
+│   │   └── main.js
 │   └── server
 │       ├── index.js
 │       └── main.js
-├── test
-│   ├── fake.js
-│   ├── helpers
-│   │   └── server.js
-│   ├── index.js
-│   ├── mocha.opts
-│   ├── react1.js
-│   ├── redux1.js
-│   └── server1.js
-└── webpack.config.js
+└── vite.config.js
 
-11 directories, 25 files
+4 directories, 12 files
