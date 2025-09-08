@@ -1,10 +1,42 @@
+# .dockerignore
+
+```
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+npm-debug.log
+
+# Build output
+dist
+coverage
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose.yml
+docker-compose.prod.yml
+
+# Editor/OS
+.vscode
+.idea
+.DS_Store
+
+```
+
 # codebase_tree.md
 
 ```md
 .
 ├── codebase.md
 ├── codebase_tree.md
+├── docker-compose.prod.yml
+├── docker-compose.yml
+├── Dockerfile
 ├── index.html
+├── Makefile
 ├── package.json
 ├── package-lock.json
 ├── params.js
@@ -18,7 +50,87 @@
 │       └── main.js
 └── vite.config.js
 
-4 directories, 12 files
+4 directories, 16 files
+
+```
+
+# docker-compose.prod.yml
+
+```yml
+# docker-compose.prod.yml for Production
+version: '3.8'
+
+services:
+  red-tetris-prod:
+    build:
+      context: .
+      target: production # Build the final 'production' stage
+    container_name: red-tetris-prod
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=production
+
+```
+
+# docker-compose.yml
+
+```yml
+# docker-compose.yml for Development
+version: '3.8'
+
+services:
+  red-tetris-dev:
+    build:
+      context: .
+      target: deps # Build only up to the 'deps' stage
+    container_name: red-tetris-dev
+    command: npm run dev
+    ports:
+      - "8080:8080" # Vite client dev server
+      - "3004:3004" # Node.js server
+    volumes:
+      - .:/usr/src/app # Mount source code for hot-reloading
+      - /usr/src/app/node_modules # Do not mount local node_modules
+
+```
+
+# Dockerfile
+
+```
+# Stage 1: Install all dependencies (dev and prod)
+FROM node:18-alpine AS deps
+WORKDIR /usr/src/app
+COPY package*.json ./
+RUN npm install
+
+# Stage 2: Build the client application
+FROM node:18-alpine AS builder
+WORKDIR /usr/src/app
+COPY --from=deps /usr/src/app/node_modules ./node_modules
+COPY . .
+RUN npm run client-build
+
+# Stage 3: Production image
+FROM node:18-alpine AS production
+WORKDIR /usr/src/app
+
+ENV NODE_ENV=production
+
+# Copy production dependencies from 'deps' stage
+COPY --from=deps /usr/src/app/package*.json ./
+RUN npm install --omit=dev
+
+# Copy server source code
+COPY ./src/server ./src/server
+COPY ./params.js ./params.js
+
+# Copy client build from 'builder' stage
+COPY --from=builder /usr/src/app/dist ./dist
+
+EXPOSE 3004
+
+CMD [ "npm", "start" ]
 
 ```
 
@@ -38,6 +150,52 @@
     <script type="module" src="/src/client/main.js"></script>
   </body>
 </html>
+
+```
+
+# Makefile
+
+```
+# Makefile for Red Tetris Project
+
+.PHONY: dev stop build prod-up prod-down clean help
+
+# Default command
+help:
+	@echo "Available commands:"
+	@echo "  make dev         - Start the development environment (client + server with hot-reload)"
+	@echo "  make stop        - Stop the development environment"
+	@echo "  make build       - Build the production Docker image"
+	@echo "  make prod-up     - Start the production environment in detached mode"
+	@echo "  make prod-down   - Stop the production environment"
+	@echo "  make clean       - Remove all stopped containers, unused networks, and dangling images"
+
+# --- Development ---
+dev:
+	@echo "Starting development environment..."
+	docker-compose -f docker-compose.yml up
+
+stop:
+	@echo "Stopping development environment..."
+	docker-compose -f docker-compose.yml down
+
+# --- Production ---
+build:
+	@echo "Building production Docker image..."
+	docker-compose -f docker-compose.prod.yml build
+
+prod-up: build
+	@echo "Starting production environment in detached mode..."
+	docker-compose -f docker-compose.prod.yml up -d
+
+prod-down:
+	@echo "Stopping production environment..."
+	docker-compose -f docker-compose.prod.yml down
+
+# --- Utility ---
+clean:
+	@echo "Cleaning up Docker resources..."
+	docker system prune -f
 
 ```
 

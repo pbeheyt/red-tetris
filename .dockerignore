@@ -1,0 +1,22 @@
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+npm-debug.log
+
+# Build output
+dist
+coverage
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose.yml
+docker-compose.prod.yml
+
+# Editor/OS
+.vscode
+.idea
+.DS_Store

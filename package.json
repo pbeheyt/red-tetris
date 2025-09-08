@@ -6,9 +6,9 @@
   "license": "MIT",
   "scripts": {
     "dev": "concurrently \"npm:client-dev\" \"npm:srv-dev\"",
-    "client-dev": "vite",
+    "client-dev": "vite --host",
     "client-build": "vite build",
-    "srv-dev": "nodemon src/server/main.js",
+    "srv-dev": "nodemon --watch src/server src/server/main.js",
     "start": "node src/server/main.js",
     "test": "vitest",
     "coverage": "vitest run --coverage",
