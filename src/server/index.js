@@ -1,6 +1,7 @@
 import http from 'http'
 import express from 'express'
 import { Server } from 'socket.io'
+import Game from './models/Game.js'
 import debug from 'debug'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -11,29 +12,74 @@ const loginfo = debug('tetris:info')
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+const activeGames = {};
+const gameIntervals = {};
+
 const initEngine = (io) => {
   io.on('connection', (socket) => {
-    loginfo(`Socket connected: ${socket.id}`)
+    loginfo(`Socket connected: ${socket.id}`);
 
-    // Écouteur pour le test de ping/pong existant
-    socket.on('action', (action) => {
-      if (action.type === 'server/ping') {
-        socket.emit('action', { type: 'pong' })
+    socket.on('joinGame', ({ roomName, playerName }) => {
+      loginfo(`Player ${playerName} (${socket.id}) is joining room '${roomName}'`);
+      socket.join(roomName);
+      socket.data.roomName = roomName; // Stocke la room pour la retrouver facilement
+
+      let game = activeGames[roomName];
+
+      if (!game) {
+        // Le premier joueur crée la partie
+        loginfo(`Creating new game in room '${roomName}'`);
+        const hostInfo = { id: socket.id, name: playerName };
+        const pieceSequence = []; // TODO: Implémenter la génération de pièces
+        game = new Game(hostInfo, pieceSequence);
+        activeGames[roomName] = game;
+
+        // Démarre la boucle de jeu
+        gameIntervals[roomName] = setInterval(() => {
+          const newState = game.tick();
+          io.to(roomName).emit('gameStateUpdate', newState);
+        }, 1000); // Répète toutes les secondes
+
+      } else {
+        // Les joueurs suivants rejoignent la partie existante
+        loginfo(`Player ${playerName} is joining existing game in room '${roomName}'`);
+        game.addPlayer({ id: socket.id, name: playerName });
       }
-    })
+      
+      // Envoie l'état initial à tout le monde dans la room
+      io.to(roomName).emit('gameStateUpdate', game.getCurrentGameState());
+    });
 
-    // Nouvel écouteur pour les actions du joueur
     socket.on('playerAction', (action) => {
-      loginfo(`Action '${action}' reçue du client ${socket.id}`);
-      // Ici, plus tard, nous appellerons la méthode de la classe Game.
-      // Par exemple: game.handlePlayerAction(socket.id, action);
+      const roomName = socket.data.roomName;
+      const game = activeGames[roomName];
+      if (game) {
+        loginfo(`Action '${action}' from ${socket.id} in room '${roomName}'`);
+        game.handlePlayerAction(socket.id, action);
+        // L'état sera mis à jour et diffusé au prochain tick de la boucle de jeu.
+      }
     });
 
     socket.on('disconnect', () => {
-      loginfo(`Socket disconnected: ${socket.id}`)
-    })
-  })
-}
+      loginfo(`Socket disconnected: ${socket.id}`);
+      const roomName = socket.data.roomName;
+      const game = activeGames[roomName];
+
+      if (game) {
+        const playersLeft = game.removePlayer(socket.id);
+        if (playersLeft === 0) {
+          loginfo(`Room '${roomName}' is empty. Stopping game loop and deleting game.`);
+          clearInterval(gameIntervals[roomName]);
+          delete gameIntervals[roomName];
+          delete activeGames[roomName];
+        } else {
+          // Informe les autres joueurs de la mise à jour
+          io.to(roomName).emit('gameStateUpdate', game.getCurrentGameState());
+        }
+      }
+    });
+  });
+};
 
 export const start = (params) => {
   return new Promise((resolve, reject) => {

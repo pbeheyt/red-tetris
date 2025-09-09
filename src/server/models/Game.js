@@ -25,12 +25,12 @@ import Piece from './Piece.js';
 /**
  * La classe Game ("Machine à Tetris") gère toute la logique d'une partie.
  * Elle est agnostique de la manière dont les données sont transmises (Socket.io, etc.).
- * @param {Array<Object>} playerInfoList - Liste d'objets contenant les infos des joueurs ({ id, name, isHost }).
+ * @param {Object} hostInfo - Objet contenant les infos du premier joueur ({ id, name }).
  * @param {Array<string>} pieceSequence - La séquence de pièces prédéfinie pour la partie.
  * @constructor
  */
-function Game(playerInfoList, pieceSequence) {
-  this.players = playerInfoList.map(p => new Player(p.id, p.name, p.isHost));
+function Game(hostInfo, pieceSequence) {
+  this.players = [new Player(hostInfo.id, hostInfo.name, true)];
   this.pieceSequence = pieceSequence;
   this.status = 'playing'; // 'playing' | 'finished'
 }
@@ -80,6 +80,27 @@ Game.prototype.getCurrentGameState = function() {
       nextPieces: [],
     })),
   };
+};
+
+/**
+ * Ajoute un nouveau joueur à la partie.
+ * @param {Object} playerInfo - Informations sur le joueur ({ id, name }).
+ */
+Game.prototype.addPlayer = function(playerInfo) {
+  const newPlayer = new Player(playerInfo.id, playerInfo.name, false);
+  this.players.push(newPlayer);
+  console.log(`Player ${playerInfo.name} added to the game. Total players: ${this.players.length}`);
+};
+
+/**
+ * Supprime un joueur de la partie.
+ * @param {string} playerId - L'ID du joueur à supprimer.
+ * @returns {number} Le nombre de joueurs restants.
+ */
+Game.prototype.removePlayer = function(playerId) {
+  this.players = this.players.filter(p => p.id !== playerId);
+  console.log(`Player ${playerId} removed. Total players: ${this.players.length}`);
+  return this.players.length;
 };
 
 export default Game;

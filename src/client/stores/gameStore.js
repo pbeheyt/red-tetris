@@ -47,8 +47,10 @@ export const useGameStore = defineStore('game', {
   actions: {
     /**
      * Établit la connexion socket et met en place les écouteurs d'événements.
+     * @param {string} roomName Le nom de la partie à rejoindre.
+     * @param {string} playerName Le nom du joueur.
      */
-    initializeSocket() {
+    initializeSocket(roomName, playerName) {
       // Évite les connexions multiples si la fonction est appelée plusieurs fois
       if (this.isConnected) return;
 
@@ -58,6 +60,8 @@ export const useGameStore = defineStore('game', {
         console.log(`Connecté au serveur avec l'ID : ${socket.id}`);
         this.isConnected = true;
         this.socketId = socket.id;
+        // Une fois connecté, on rejoint la partie
+        this.joinGame(roomName, playerName);
       });
 
       socket.on('disconnect', () => {
@@ -78,7 +82,17 @@ export const useGameStore = defineStore('game', {
      * @param {Object} newState Le nouvel objet GameState.
      */
     setGameState(newState) {
+      console.log('Received gameStateUpdate:', newState);
       this.gameState = newState;
+    },
+
+    /**
+     * Informe le serveur que le client souhaite rejoindre une partie.
+     * @param {string} roomName
+     * @param {string} playerName
+     */
+    joinGame(roomName, playerName) {
+      socket.emit('joinGame', { roomName, playerName });
     },
 
     /**
