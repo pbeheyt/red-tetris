@@ -1,6 +1,6 @@
 # Makefile for Red Tetris Project
 
-.PHONY: dev stop build prod-up prod-down clean help
+.PHONY: dev stop build prod-up prod-down clean test help
 
 # Default command
 help:
@@ -11,6 +11,7 @@ help:
 	@echo "  make prod-up     - Start the production environment in detached mode"
 	@echo "  make prod-down   - Stop the production environment"
 	@echo "  make clean       - Remove all stopped containers, unused networks, and dangling images"
+	@echo "  make test        - Run unit tests inside the development container"
 
 # --- Development ---
 dev:
@@ -33,6 +34,11 @@ prod-up: build
 prod-down:
 	@echo "Stopping production environment..."
 	docker-compose -f docker-compose.prod.yml down
+
+# --- Testing ---
+test:
+	@echo "Running tests..."
+	docker-compose -f docker-compose.yml exec red-tetris-dev npm test
 
 # --- Utility ---
 clean:
