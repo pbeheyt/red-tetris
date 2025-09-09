@@ -14,11 +14,21 @@ const __dirname = path.dirname(__filename)
 const initEngine = (io) => {
   io.on('connection', (socket) => {
     loginfo(`Socket connected: ${socket.id}`)
+
+    // Écouteur pour le test de ping/pong existant
     socket.on('action', (action) => {
       if (action.type === 'server/ping') {
         socket.emit('action', { type: 'pong' })
       }
     })
+
+    // Nouvel écouteur pour les actions du joueur
+    socket.on('playerAction', (action) => {
+      loginfo(`Action '${action}' reçue du client ${socket.id}`);
+      // Ici, plus tard, nous appellerons la méthode de la classe Game.
+      // Par exemple: game.handlePlayerAction(socket.id, action);
+    });
+
     socket.on('disconnect', () => {
       loginfo(`Socket disconnected: ${socket.id}`)
     })

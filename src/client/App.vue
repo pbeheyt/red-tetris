@@ -1,6 +1,17 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onUnmounted } from 'vue';
+import { io } from 'socket.io-client';
 import GameBoard from './components/GameBoard.vue';
+
+// Initialise la connexion Socket.io.
+// En développement, le proxy Vite redirigera cette requête vers le port 3004.
+// En production, le client et le serveur seront sur le même domaine.
+const socket = io();
+
+// Log pour confirmer la connexion
+socket.on('connect', () => {
+  console.log(`Connecté au serveur avec l'ID : ${socket.id}`);
+});
 
 // Données factices pour simuler ce qui viendra du serveur
 const board = ref([
@@ -17,8 +28,14 @@ const activePiece = ref({
 // Méthode pour gérer le "signal de sortie" du GameBoard
 const handlePlayerAction = (action) => {
   console.log(`Action reçue de GameBoard : ${action}. Envoi au serveur...`);
-  // Ici, on enverra l'action au serveur via socket.io
+  // On envoie l'action au serveur via l'événement 'playerAction'.
+  socket.emit('playerAction', action);
 };
+
+// Nettoie la connexion lorsque le composant est retiré
+onUnmounted(() => {
+  socket.disconnect();
+});
 </script>
 
 <template>
