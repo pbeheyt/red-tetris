@@ -58,36 +58,42 @@ const initEngine = (io) => {
       loginfo(`Socket ${socket.id} left lobby browser.`);
     });
 
-    socket.on('joinGame', ({ roomName, playerName }) => {
-      loginfo(`Player ${playerName} (${socket.id}) is joining room '${roomName}'`);
+    socket.on('joinGame', ({ roomName, playerName, isSpectator }) => {
+      loginfo(`User ${playerName} (${socket.id}) trying to join room '${roomName}' as ${isSpectator ? 'spectator' : 'player'}`);
       socket.join(roomName);
-      socket.data.roomName = roomName; // Stocke la room pour la retrouver facilement
+      socket.data.roomName = roomName;
 
       let game = activeGames[roomName];
 
-      if (!game) {
-        // Le premier joueur crée la partie
-        loginfo(`Creating new game in room '${roomName}'`);
-        const hostInfo = { id: socket.id, name: playerName };
-        const pieceSequence = []; // TODO: Implémenter la génération de pièces
-        game = new Game(hostInfo, pieceSequence);
-        activeGames[roomName] = game;
-
-      } else {
-        // Les joueurs suivants rejoignent la partie existante
-        loginfo(`Player ${playerName} is joining existing game in room '${roomName}'`);
-        const added = game.addPlayer({ id: socket.id, name: playerName });
-        if (!added) {
-          // Gérer le cas où la partie est déjà commencée
-          socket.emit('error', { message: 'La partie a déjà commencé.' });
-          socket.disconnect();
+      if (isSpectator) {
+        if (game) {
+          game.addSpectator({ id: socket.id, name: playerName });
+        } else {
+          // Ne peut pas spectate une partie qui n'existe pas
+          socket.emit('error', { message: 'Cette partie n\'existe pas.' });
+          socket.leave(roomName);
           return;
         }
+      } else {
+        // Logique pour les joueurs
+        if (!game) {
+          loginfo(`Creating new game in room '${roomName}' for host ${playerName}`);
+          const hostInfo = { id: socket.id, name: playerName };
+          const pieceSequence = []; // TODO: Implémenter la génération de pièces
+          game = new Game(hostInfo, pieceSequence);
+          activeGames[roomName] = game;
+        } else {
+          loginfo(`Player ${playerName} is joining existing game in room '${roomName}'`);
+          const added = game.addPlayer({ id: socket.id, name: playerName });
+          if (!added) {
+            socket.emit('error', { message: 'La partie a déjà commencé ou est pleine.' });
+            socket.leave(roomName);
+            return;
+          }
+        }
       }
-      
-      // Envoie l'état initial à tout le monde dans la room
+
       io.to(roomName).emit('gameStateUpdate', game.getCurrentGameState());
-      // Met à jour la liste des lobbies pour tout le monde dans le menu
       broadcastLobbies(io);
     });
 
@@ -121,41 +127,48 @@ const initEngine = (io) => {
     });
 
     /**
-     * Gère la logique de départ d'un joueur, que ce soit par déconnexion
-     * ou en quittant volontairement la partie.
-     * @param {import('socket.io').Socket} socket Le socket du joueur qui part.
+     * Gère la logique de départ d'un participant (joueur ou spectateur).
+     * @param {import('socket.io').Socket} socket Le socket du participant qui part.
      */
-    const handlePlayerLeave = (socket) => {
+    const handleParticipantLeave = (socket) => {
       const roomName = socket.data.roomName;
-      if (!roomName) return; // Le joueur n'était dans aucune partie
+      if (!roomName) return;
 
       const game = activeGames[roomName];
-      if (game) {
-        const playersLeft = game.removePlayer(socket.id);
+      if (!game) return;
+
+      const initialPlayerCount = game.players.length;
+      const playersLeft = game.removePlayer(socket.id);
+
+      if (playersLeft < initialPlayerCount) {
+        // Un joueur a été retiré
         if (playersLeft === 0) {
           loginfo(`Room '${roomName}' is empty. Stopping game loop and deleting game.`);
           clearInterval(gameIntervals[roomName]);
           delete gameIntervals[roomName];
           delete activeGames[roomName];
         } else {
-          // Informe les autres joueurs de la mise à jour
           io.to(roomName).emit('gameStateUpdate', game.getCurrentGameState());
         }
-        // Met à jour la liste des lobbies car un joueur a quitté (ou la partie a été détruite)
-        broadcastLobbies(io);
+      } else {
+        // Aucun joueur n'a été retiré, c'était donc un spectateur
+        game.removeSpectator(socket.id);
+        io.to(roomName).emit('gameStateUpdate', game.getCurrentGameState());
       }
+
+      broadcastLobbies(io);
     };
 
     socket.on('leaveGame', () => {
-      loginfo(`Player ${socket.id} is leaving the game via button.`);
-      handlePlayerLeave(socket);
+      loginfo(`Participant ${socket.id} is leaving the game via button.`);
+      handleParticipantLeave(socket);
       // Oublie la room pour ce socket pour éviter une double action à la déconnexion
       socket.data.roomName = null;
     });
 
     socket.on('disconnect', () => {
       loginfo(`Socket disconnected: ${socket.id}`);
-      handlePlayerLeave(socket);
+      handleParticipantLeave(socket);
     });
   });
 };

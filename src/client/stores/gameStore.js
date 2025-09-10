@@ -38,6 +38,13 @@ export const useGameStore = defineStore('game', {
     playerList: (state) => state.gameState?.players || [],
     // Renvoie le nom du gagnant si la partie est terminée
     gameWinner: (state) => state.gameState?.winner || null,
+    // Renvoie la liste des spectateurs
+    spectatorList: (state) => state.gameState?.spectators || [],
+    // Vérifie si l'utilisateur actuel est un spectateur
+    isCurrentUserSpectator: (state) => {
+      if (!state.gameState || !socketState.socketId) return false;
+      return state.gameState.spectators.some(s => s.id === socketState.socketId);
+    },
   },
 
   /**
@@ -85,9 +92,10 @@ export const useGameStore = defineStore('game', {
      * Gère le cas où la connexion n'est pas encore établie en attendant l'événement 'connect'.
      * @param {string} roomName Le nom de la partie à rejoindre.
      * @param {string} playerName Le nom du joueur.
+     * @param {boolean} isSpectator Indique si l'utilisateur rejoint en tant que spectateur.
      */
-    connectAndJoin(roomName, playerName) {
-      const joinPayload = { roomName, playerName };
+    connectAndJoin(roomName, playerName, isSpectator = false) {
+      const joinPayload = { roomName, playerName, isSpectator };
       
       if (socketState.isConnected) {
         console.log('GameStore: Already connected, emitting joinGame.');

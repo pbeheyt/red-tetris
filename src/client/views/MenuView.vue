@@ -42,6 +42,10 @@ const joinGame = (roomName) => {
   router.push(`/${roomName}/${userStore.playerName}`);
 };
 
+const spectateGame = (roomName) => {
+  router.push(`/${roomName}/${userStore.playerName}?spectate=true`);
+};
+
 const handleChangeName = () => {
   router.push('/');
 };
@@ -78,7 +82,7 @@ const handleChangeName = () => {
               <th>Nom de la Partie</th>
               <th>Hôte</th>
               <th>Joueurs</th>
-              <th>Action</th>
+              <th colspan="2">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -88,6 +92,9 @@ const handleChangeName = () => {
               <td>{{ lobby.playerCount }} / 4</td>
               <td>
                 <button @click="joinGame(lobby.roomName)" class="join-button">Rejoindre</button>
+              </td>
+              <td>
+                <button @click="spectateGame(lobby.roomName)" class="spectate-button">Spectateur</button>
               </td>
             </tr>
           </tbody>
@@ -204,6 +211,20 @@ th {
 
 .join-button:hover {
   background-color: #0056b3;
+}
+
+.spectate-button {
+  background-color: #6c757d;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.spectate-button:hover {
+  background-color: #5a6268;
 }
 
 .no-lobbies-message {

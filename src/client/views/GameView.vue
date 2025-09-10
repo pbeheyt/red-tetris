@@ -27,9 +27,10 @@ const handleLeaveGame = () => {
 // globale est déjà gérée par App.vue.
 onMounted(() => {
   const { roomName, playerName } = route.params;
+  const isSpectator = route.query.spectate === 'true';
   if (roomName && playerName) {
-    console.log(`Joining game '${roomName}' as '${playerName}'`);
-    gameStore.connectAndJoin(roomName, playerName);
+    console.log(`Joining game '${roomName}' as '${playerName}' (Spectator: ${isSpectator})`);
+    gameStore.connectAndJoin(roomName, playerName, isSpectator);
   }
 });
 
@@ -74,13 +75,41 @@ onUnmounted(() => {
       <p v-else>En attente que l'hôte démarre la partie.</p>
     </div>
 
-    <!-- Section Jeu -->
-    <GameBoard
-      v-if="gameStore.gameStatus === 'playing' || (gameStore.gameStatus === 'finished' && gameStore.currentPlayer)"
-      :board="gameStore.board"
-      :active-piece="gameStore.activePiece"
-      @player-action="handlePlayerAction"
-    />
+    <!-- Section Jeu (pour les joueurs) -->
+    <div v-if="!gameStore.isCurrentUserSpectator">
+      <GameBoard
+        v-if="gameStore.gameStatus === 'playing' || (gameStore.gameStatus === 'finished' && gameStore.currentPlayer)"
+        :board="gameStore.board"
+        :active-piece="gameStore.activePiece"
+        @player-action="handlePlayerAction"
+      />
+    </div>
+
+    <!-- Section Spectateur -->
+    <div v-if="gameStore.isCurrentUserSpectator" class="spectator-container">
+      <h2>Mode Spectateur</h2>
+      <p>Vous observez la partie. Voici les participants :</p>
+      <div class="participant-lists">
+        <div class="player-list">
+          <h3>Joueurs</h3>
+          <ul>
+            <li v-for="player in gameStore.playerList" :key="player.id">
+              {{ player.name }} {{ player.isHost ? '(Hôte)' : '' }}
+            </li>
+          </ul>
+        </div>
+        <div class="spectator-list">
+          <h3>Spectateurs</h3>
+          <ul>
+            <li v-for="spectator in gameStore.spectatorList" :key="spectator.id">
+              {{ spectator.name }}
+            </li>
+          </ul>
+        </div>
+      </div>
+      <!-- À l'avenir, on pourrait afficher les plateaux de tous les joueurs ici -->
+    </div>
+
   </div>
 </template>
 
@@ -166,5 +195,20 @@ onUnmounted(() => {
 
 .start-button:hover {
   background-color: #45a049;
+}
+
+.spectator-container {
+  border: 2px dashed #007bff;
+  background-color: #e7f3ff;
+  padding: 20px;
+  margin: 20px auto;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.participant-lists {
+  display: flex;
+  justify-content: space-around;
+  text-align: left;
 }
 </style>

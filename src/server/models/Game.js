@@ -3,9 +3,10 @@ import Piece from './Piece.js';
 
 /**
  * @typedef {Object} GameState
- * @property {('playing'|'finished')} status - L'état actuel de la partie.
+ * @property {('lobby'|'playing'|'finished')} status - L'état actuel de la partie.
  * @property {string|null} winner - Le nom du gagnant si la partie est terminée.
  * @property {Array<PlayerState>} players - La liste des états de chaque joueur.
+ * @property {Array<{id: string, name: string}>} spectators - La liste des spectateurs.
  */
 
 /**
@@ -31,6 +32,7 @@ import Piece from './Piece.js';
  */
 function Game(hostInfo, pieceSequence) {
   this.players = [new Player(hostInfo.id, hostInfo.name, true)];
+  this.spectators = [];
   this.pieceSequence = pieceSequence;
   this.status = 'lobby'; // 'lobby' | 'playing' | 'finished'
   this.winner = null;
@@ -81,6 +83,7 @@ Game.prototype.getCurrentGameState = function() {
       activePiece: player.activePiece,
       nextPieces: [],
     })),
+    spectators: this.spectators,
   };
 };
 
@@ -97,6 +100,19 @@ Game.prototype.addPlayer = function(playerInfo) {
   const newPlayer = new Player(playerInfo.id, playerInfo.name, false);
   this.players.push(newPlayer);
   console.log(`Player ${playerInfo.name} added to the game. Total players: ${this.players.length}`);
+  return true;
+};
+
+/**
+ * Ajoute un nouveau spectateur à la partie.
+ * @param {Object} spectatorInfo - Informations sur le spectateur ({ id, name }).
+ * @returns {boolean} - Toujours true.
+ */
+Game.prototype.addSpectator = function(spectatorInfo) {
+  if (!this.spectators.some(s => s.id === spectatorInfo.id)) {
+    this.spectators.push({ id: spectatorInfo.id, name: spectatorInfo.name });
+    console.log(`Spectator ${spectatorInfo.name} added. Total spectators: ${this.spectators.length}`);
+  }
   return true;
 };
 
@@ -128,6 +144,15 @@ Game.prototype.removePlayer = function(playerId) {
   }
 
   return this.players.length;
+};
+
+/**
+ * Supprime un spectateur de la partie.
+ * @param {string} spectatorId - L'ID du spectateur à supprimer.
+ */
+Game.prototype.removeSpectator = function(spectatorId) {
+  this.spectators = this.spectators.filter(s => s.id !== spectatorId);
+  console.log(`Spectator ${spectatorId} removed. Total spectators: ${this.spectators.length}`);
 };
 
 /**
