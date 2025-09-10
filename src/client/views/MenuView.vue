@@ -41,13 +41,20 @@ const createMultiplayerGame = () => {
 const joinGame = (roomName) => {
   router.push(`/${roomName}/${userStore.playerName}`);
 };
+
+const handleChangeName = () => {
+  router.push('/');
+};
 </script>
 
 <template>
   <div class="menu-container">
     <div class="actions-box">
       <h2>Menu Principal</h2>
-      <p>Bonjour, <strong>{{ userStore.playerName }}</strong> !</p>
+      <div class="welcome-message">
+        <p>Bonjour, <strong>{{ userStore.playerName }}</strong> !</p>
+        <button @click="handleChangeName" class="change-name-button">Changer de nom</button>
+      </div>
       <button @click="startSoloGame" class="menu-button solo">Mode Solo</button>
       
       <form @submit.prevent="createMultiplayerGame" class="create-game-form">
@@ -94,6 +101,28 @@ const joinGame = (roomName) => {
 </template>
 
 <style scoped>
+.welcome-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.change-name-button {
+  background-color: #6c757d;
+  color: white;
+  padding: 5px 10px;
+  font-size: 0.8em;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.change-name-button:hover {
+  background-color: #5a6268;
+}
+
 .menu-container {
   display: flex;
   flex-direction: column;

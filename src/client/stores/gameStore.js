@@ -36,6 +36,8 @@ export const useGameStore = defineStore('game', {
     isCurrentUserHost: (state) => state.currentPlayer?.isHost || false,
     // Renvoie la liste de tous les joueurs dans la partie
     playerList: (state) => state.gameState?.players || [],
+    // Renvoie le nom du gagnant si la partie est terminée
+    gameWinner: (state) => state.gameState?.winner || null,
   },
 
   /**

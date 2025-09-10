@@ -33,6 +33,7 @@ function Game(hostInfo, pieceSequence) {
   this.players = [new Player(hostInfo.id, hostInfo.name, true)];
   this.pieceSequence = pieceSequence;
   this.status = 'lobby'; // 'lobby' | 'playing' | 'finished'
+  this.winner = null;
 }
 
 /**
@@ -70,7 +71,7 @@ Game.prototype.getCurrentGameState = function() {
   // C'est le Contrat n°2.
   return {
     status: this.status,
-    winner: null,
+    winner: this.winner,
     players: this.players.map(player => ({
       id: player.id,
       name: player.name,
@@ -107,6 +108,15 @@ Game.prototype.addPlayer = function(playerInfo) {
 Game.prototype.removePlayer = function(playerId) {
   this.players = this.players.filter(p => p.id !== playerId);
   console.log(`Player ${playerId} removed. Total players: ${this.players.length}`);
+
+  // Si la partie était en cours et qu'il ne reste qu'un joueur, ce joueur gagne.
+  // La boucle de jeu continue pour lui permettre de jouer pour le score.
+  if (this.status === 'playing' && this.players.length === 1) {
+    this.status = 'finished';
+    this.winner = this.players[0].name;
+    console.log(`Game in finished state. Winner is ${this.winner}.`);
+  }
+
   return this.players.length;
 };
 

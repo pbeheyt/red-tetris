@@ -1,12 +1,13 @@
 <script setup>
 import { onMounted, onUnmounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useGameStore } from '../stores/gameStore';
 import { state as socketState } from '../services/socketService.js';
 import GameBoard from '../components/GameBoard.vue';
 
 const gameStore = useGameStore();
 const route = useRoute();
+const router = useRouter();
 
 const handlePlayerAction = (action) => {
   gameStore.sendPlayerAction(action);
@@ -14,6 +15,11 @@ const handlePlayerAction = (action) => {
 
 const handleStartGame = () => {
   gameStore.sendStartGame();
+};
+
+const handleLeaveGame = () => {
+  gameStore.disconnectFromGame();
+  router.push('/menu');
 };
 
 // onMounted s'exécute une seule fois lorsque le composant est monté.
@@ -34,9 +40,21 @@ onUnmounted(() => {
 
 <template>
   <div class="game-container">
-    <p>Partie : <strong>{{ route.params.roomName }}</strong></p>
-    <p>Joueur : <strong>{{ route.params.playerName }}</strong></p>
-    <p>État : <strong :style="{ color: socketState.isConnected ? 'green' : 'red' }">{{ socketState.isConnected ? 'Connecté' : 'En cours de connexion...' }}</strong></p>
+    <div class="game-header">
+      <div>
+        <p>Partie : <strong>{{ route.params.roomName }}</strong></p>
+        <p>Joueur : <strong>{{ route.params.playerName }}</strong></p>
+        <p>État : <strong :style="{ color: socketState.isConnected ? 'green' : 'red' }">{{ socketState.isConnected ? 'Connecté' : 'En cours de connexion...' }}</strong></p>
+      </div>
+      <button @click="handleLeaveGame" class="leave-button">Quitter</button>
+    </div>
+
+    <!-- Écran de fin de partie -->
+    <div v-if="gameStore.gameStatus === 'finished'" class="game-over-container">
+      <h2>Partie terminée !</h2>
+      <p class="winner-message">Le gagnant est : <strong>{{ gameStore.gameWinner }}</strong></p>
+      <button @click="handleLeaveGame" class="leave-button">Retourner au menu</button>
+    </div>
     
     <!-- Section Lobby -->
     <div v-if="gameStore.gameStatus === 'lobby'" class="lobby-container">
@@ -58,7 +76,7 @@ onUnmounted(() => {
 
     <!-- Section Jeu -->
     <GameBoard
-      v-else-if="gameStore.gameStatus === 'playing'"
+      v-if="gameStore.gameStatus === 'playing' || (gameStore.gameStatus === 'finished' && gameStore.currentPlayer)"
       :board="gameStore.board"
       :active-piece="gameStore.activePiece"
       @player-action="handlePlayerAction"
@@ -67,8 +85,48 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.game-container {
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.game-header p {
+  margin: 0;
+}
+
+.leave-button {
+  background-color: #dc3545;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+}
+
+.leave-button:hover {
+  background-color: #c82333;
+}
+
+.game-over-container {
+  border: 2px solid #ffc107;
+  background-color: #fff3cd;
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 500px;
+  border-radius: 8px;
   text-align: center;
+}
+
+.winner-message {
+  font-size: 1.2em;
+  margin-bottom: 20px;
+}
+
+.game-container {
   margin-top: 20px;
 }
 
