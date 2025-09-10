@@ -80,13 +80,23 @@ export const useGameStore = defineStore('game', {
 
     /**
      * Emet l'événement pour rejoindre une partie spécifique.
-     * Suppose que la connexion est déjà gérée par initializeStore.
+     * Gère le cas où la connexion n'est pas encore établie en attendant l'événement 'connect'.
      * @param {string} roomName Le nom de la partie à rejoindre.
      * @param {string} playerName Le nom du joueur.
      */
     connectAndJoin(roomName, playerName) {
       const joinPayload = { roomName, playerName };
-      socketService.emit('joinGame', joinPayload);
+      
+      if (socketState.isConnected) {
+        console.log('GameStore: Already connected, emitting joinGame.');
+        socketService.emit('joinGame', joinPayload);
+      } else {
+        console.log('GameStore: Not connected. Queuing joinGame until connect event.');
+        socketService.once('connect', () => {
+          console.log('GameStore: Connect event received, now emitting joinGame.');
+          socketService.emit('joinGame', joinPayload);
+        });
+      }
     },
 
     /**
@@ -122,18 +132,18 @@ export const useGameStore = defineStore('game', {
 
     /**
      * Informe le serveur que le client entre dans le navigateur de lobbies.
-     * S'assure que la connexion est établie au préalable.
+     * Gère le cas où la connexion n'est pas encore établie en attendant l'événement 'connect'.
      */
     enterLobbyBrowser() {
-      // La connexion est maintenant gérée par initializeStore au démarrage de l'app,
-      // on a juste besoin d'émettre l'événement.
       if (socketState.isConnected) {
+        console.log('GameStore: Already connected, emitting enterLobbyBrowser.');
         socketService.emit('enterLobbyBrowser');
       } else {
-        // Au cas où la connexion serait perdue, on peut tenter de la rétablir.
-        console.warn('Socket not connected when entering lobby. Attempting to reconnect via initializeStore.');
-        this.initializeStore();
-        // L'utilisateur devra peut-être rafraîchir pour voir la liste, mais le système est plus robuste.
+        console.log('GameStore: Not connected. Queuing enterLobbyBrowser until connect event.');
+        socketService.once('connect', () => {
+          console.log('GameStore: Connect event received, now emitting enterLobbyBrowser.');
+          socketService.emit('enterLobbyBrowser');
+        });
       }
     },
 

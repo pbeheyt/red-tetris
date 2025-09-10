@@ -62,4 +62,13 @@ export const socketService = {
   on(event, callback) {
     socket.on(event, callback);
   },
+
+  /**
+   * Méthode générique pour écouter un événement venant du serveur une seule fois.
+   * @param {string} event Le nom de l'événement.
+   * @param {Function} callback La fonction à exécuter à la réception.
+   */
+  once(event, callback) {
+    socket.once(event, callback);
+  }
 };
