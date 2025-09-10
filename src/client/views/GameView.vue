@@ -1,5 +1,5 @@
 <script setup>
-import { onUnmounted, watchEffect } from 'vue';
+import { onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useGameStore } from '../stores/gameStore';
 import { state as socketState } from '../services/socketService.js';
@@ -16,15 +16,13 @@ const handleStartGame = () => {
   gameStore.sendStartGame();
 };
 
-// watchEffect s'exécutera une fois immédiatement, puis à chaque fois
-// que les dépendances réactives (ici, route.params) changent.
-watchEffect(() => {
+// onMounted s'exécute une seule fois lorsque le composant est monté.
+// C'est le moment idéal pour rejoindre la partie, car la connexion
+// globale est déjà gérée par App.vue.
+onMounted(() => {
   const { roomName, playerName } = route.params;
-
-  // On s'assure que les paramètres sont présents ET que nous ne sommes pas déjà connectés.
-  // Cela empêche les reconnexions multiples.
-  if (roomName && playerName && !socketState.isConnected) {
-    console.log(`Déclenchement de la connexion à la partie '${roomName}' en tant que '${playerName}'`);
+  if (roomName && playerName) {
+    console.log(`Joining game '${roomName}' as '${playerName}'`);
     gameStore.connectAndJoin(roomName, playerName);
   }
 });

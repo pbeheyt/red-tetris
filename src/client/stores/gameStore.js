@@ -60,44 +60,33 @@ export const useGameStore = defineStore('game', {
         this.lobbies = lobbiesList;
       });
 
-      // On peut aussi réagir à la déconnexion pour nettoyer l'état du jeu.
-      socketService.on('disconnect', () => {
-        this.gameState = null;
-      });
-
       this.listenersRegistered = true;
       console.log('GameStore: Listeners registered.');
     },
 
     /**
-     * Déclenche la connexion et rejoint une partie.
+     * Crée la connexion initiale au serveur et enregistre les écouteurs globaux.
+     * Cette action est conçue pour être appelée une seule fois au démarrage de l'application.
+     */
+    initializeStore() {
+      if (socketState.isConnected || this.listenersRegistered) {
+        console.log('Store already initialized.');
+        return;
+      }
+      console.log('Initializing GameStore: Connecting and registering listeners...');
+      this.registerGameListeners();
+      socketService.connect();
+    },
+
+    /**
+     * Emet l'événement pour rejoindre une partie spécifique.
+     * Suppose que la connexion est déjà gérée par initializeStore.
      * @param {string} roomName Le nom de la partie à rejoindre.
      * @param {string} playerName Le nom du joueur.
      */
     connectAndJoin(roomName, playerName) {
-      // S'assure que les écouteurs globaux sont prêts.
-      this.registerGameListeners();
-
       const joinPayload = { roomName, playerName };
-
-      // Si déjà connecté, on rejoint directement.
-      if (socketState.isConnected) {
-        console.log('Already connected, joining game directly.');
-        socketService.emit('joinGame', joinPayload);
-        return;
-      }
-
-      // Si pas connecté, on se connecte, PUIS on rejoint.
-      // .once() est crucial ici : il garantit que cet écouteur ne s'exécutera qu'une seule fois.
-      // Cela empêche l'accumulation d'écouteurs qui causait le bug de jonctions multiples.
-      console.log('Not connected. Connecting, then joining game...');
-      socketService.on('connect', () => {
-        console.log('Connect event received, now joining game.');
-        socketService.emit('joinGame', joinPayload);
-      });
-
-      // Déclenche la connexion
-      socketService.connect();
+      socketService.emit('joinGame', joinPayload);
     },
 
     /**
@@ -124,17 +113,28 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
-     * Demande au service de se déconnecter.
+     * Demande au service de se déconnecter et nettoie l'état local.
      */
     disconnectFromGame() {
       socketService.disconnect();
+      this.gameState = null; // Nettoyage immédiat de l'état côté client
     },
 
     /**
      * Informe le serveur que le client entre dans le navigateur de lobbies.
+     * S'assure que la connexion est établie au préalable.
      */
     enterLobbyBrowser() {
-      socketService.emit('enterLobbyBrowser');
+      // La connexion est maintenant gérée par initializeStore au démarrage de l'app,
+      // on a juste besoin d'émettre l'événement.
+      if (socketState.isConnected) {
+        socketService.emit('enterLobbyBrowser');
+      } else {
+        // Au cas où la connexion serait perdue, on peut tenter de la rétablir.
+        console.warn('Socket not connected when entering lobby. Attempting to reconnect via initializeStore.');
+        this.initializeStore();
+        // L'utilisateur devra peut-être rafraîchir pour voir la liste, mais le système est plus robuste.
+      }
     },
 
     /**

@@ -10,7 +10,7 @@ describe('Game Model', () => {
 
     expect(game.players).toBeDefined();
     expect(game.players.length).toBe(1);
-    expect(game.status).toBe('playing');
+    expect(game.status).toBe('lobby');
 
     const host = game.players[0];
     expect(host.id).toBe(hostInfo.id);

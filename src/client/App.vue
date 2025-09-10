@@ -1,7 +1,18 @@
 <script setup>
-// Le composant App.vue est maintenant la "coquille" principale de l'application.
-// Il ne contient que les éléments globaux et le <router-view>
-// qui affichera le composant correspondant à la route actuelle.
+import { onMounted } from 'vue';
+import { useGameStore } from './stores/gameStore';
+
+// Le composant App.vue est la "coquille" principale de l'application.
+// C'est le meilleur endroit pour initialiser des services globaux comme le store de jeu.
+
+const gameStore = useGameStore();
+
+// onMounted est appelé une seule fois lorsque le composant App est créé.
+// C'est le moment idéal pour établir la connexion socket qui persistera
+// pendant toute la durée de vie de l'application.
+onMounted(() => {
+  gameStore.initializeStore();
+});
 </script>
 
 <template>

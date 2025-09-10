@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '../stores/userStore';
 import { useGameStore } from '../stores/gameStore';
@@ -7,6 +7,8 @@ import { useGameStore } from '../stores/gameStore';
 const userStore = useUserStore();
 const gameStore = useGameStore();
 const router = useRouter();
+
+const newRoomName = ref('');
 
 if (!userStore.playerName) {
   router.push('/');
@@ -28,9 +30,12 @@ const startSoloGame = () => {
 };
 
 const createMultiplayerGame = () => {
-  // Le nom de la partie sera simplement le nom de l'hôte
-  const roomName = userStore.playerName;
-  router.push(`/${roomName}/${userStore.playerName}`);
+  const roomName = newRoomName.value.trim();
+  if (roomName) {
+    router.push(`/${roomName}/${userStore.playerName}`);
+  } else {
+    alert('Veuillez donner un nom à votre partie.');
+  }
 };
 
 const joinGame = (roomName) => {
@@ -43,10 +48,18 @@ const joinGame = (roomName) => {
     <div class="actions-box">
       <h2>Menu Principal</h2>
       <p>Bonjour, <strong>{{ userStore.playerName }}</strong> !</p>
-      <div class="button-group">
-        <button @click="startSoloGame" class="menu-button solo">Mode Solo</button>
-        <button @click="createMultiplayerGame" class="menu-button multi-create">Créer une partie</button>
-      </div>
+      <button @click="startSoloGame" class="menu-button solo">Mode Solo</button>
+      
+      <form @submit.prevent="createMultiplayerGame" class="create-game-form">
+        <input
+          v-model="newRoomName"
+          type="text"
+          placeholder="Nom de la nouvelle partie"
+          required
+          class="room-name-input"
+        />
+        <button type="submit" class="menu-button multi-create">Créer une partie</button>
+      </form>
     </div>
 
     <div class="lobby-browser">
@@ -97,11 +110,20 @@ const joinGame = (roomName) => {
   text-align: center;
 }
 
-.button-group {
+.create-game-form {
   display: flex;
   justify-content: center;
-  gap: 20px;
+  gap: 10px;
   margin-top: 20px;
+  align-items: stretch;
+}
+
+.room-name-input {
+  padding: 10px;
+  font-size: 1em;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  flex-grow: 1;
 }
 
 .menu-button {
