@@ -2,12 +2,14 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { createRouter, createWebHashHistory } from 'vue-router'
 import App from './App.vue'
+import HomeView from './views/HomeView.vue'
+import MenuView from './views/MenuView.vue'
+import GameView from './views/GameView.vue'
 
 const routes = [
-  // Route pour la page d'accueil, sans paramètres
-  { path: '/', component: App },
-  // Route pour rejoindre une partie, avec les paramètres requis
-  { path: '/:roomName/:playerName', component: App },
+  { path: '/', component: HomeView },
+  { path: '/menu', component: MenuView },
+  { path: '/:roomName/:playerName', component: GameView },
 ];
 
 const router = createRouter({
