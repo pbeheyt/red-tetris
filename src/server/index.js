@@ -2,6 +2,7 @@ import http from 'http'
 import express from 'express'
 import { Server } from 'socket.io'
 import Game from './models/Game.js'
+import { GAME_TICK_MS } from '../shared/constants.js'
 import debug from 'debug'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -72,12 +73,6 @@ const initEngine = (io) => {
         game = new Game(hostInfo, pieceSequence);
         activeGames[roomName] = game;
 
-        // Démarre la boucle de jeu
-        gameIntervals[roomName] = setInterval(() => {
-          const newState = game.tick();
-          io.to(roomName).emit('gameStateUpdate', newState);
-        }, 1000); // Répète toutes les secondes
-
       } else {
         // Les joueurs suivants rejoignent la partie existante
         loginfo(`Player ${playerName} is joining existing game in room '${roomName}'`);
@@ -102,6 +97,13 @@ const initEngine = (io) => {
       if (game && game.players[0].id === socket.id) { // Vérifie si le joueur est l'hôte
         loginfo(`Host ${socket.id} is starting the game in room '${roomName}'`);
         game.startGame();
+
+        // Démarre la boucle de jeu UNIQUEMENT lorsque la partie commence.
+        gameIntervals[roomName] = setInterval(() => {
+          const newState = game.tick();
+          io.to(roomName).emit('gameStateUpdate', newState);
+        }, GAME_TICK_MS);
+
         io.to(roomName).emit('gameStateUpdate', game.getCurrentGameState());
         // Met à jour la liste des lobbies car cette partie n'est plus joignable
         broadcastLobbies(io);
