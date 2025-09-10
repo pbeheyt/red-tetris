@@ -11,6 +11,8 @@ export const useGameStore = defineStore('game', {
   state: () => ({
     // L'objet GameState reçu du serveur, conforme au Contrat n°2
     gameState: null,
+    // La liste des lobbies joignables
+    lobbies: [],
   }),
 
   /**
@@ -46,6 +48,11 @@ export const useGameStore = defineStore('game', {
       // Met en place les écouteurs pour les événements spécifiques au jeu.
       socketService.on('gameStateUpdate', (newState) => {
         this.gameState = newState;
+      });
+
+      // Écouteur pour la mise à jour de la liste des lobbies
+      socketService.on('lobbiesListUpdate', (lobbiesList) => {
+        this.lobbies = lobbiesList;
       });
 
       // On peut aussi réagir à la déconnexion pour nettoyer l'état du jeu.
@@ -100,6 +107,20 @@ export const useGameStore = defineStore('game', {
      */
     disconnectFromGame() {
       socketService.disconnect();
+    },
+
+    /**
+     * Informe le serveur que le client entre dans le navigateur de lobbies.
+     */
+    enterLobbyBrowser() {
+      socketService.emit('enterLobbyBrowser');
+    },
+
+    /**
+     * Informe le serveur que le client quitte le navigateur de lobbies.
+     */
+    leaveLobbyBrowser() {
+      socketService.emit('leaveLobbyBrowser');
     },
   },
 });

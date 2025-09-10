@@ -12,12 +12,50 @@ const loginfo = debug('tetris:info')
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+const LOBBY_ROOM = 'global-lobby';
+
 const activeGames = {};
 const gameIntervals = {};
+
+/**
+ * Construit et diffuse la liste des parties joignables à tous les clients dans le menu.
+ * @param {Server} io L'instance du serveur Socket.io.
+ */
+const broadcastLobbies = (io) => {
+  const joinableLobbies = Object.values(activeGames)
+    .filter(game => game.status === 'lobby')
+    .map(game => ({
+      roomName: game.players[0].name, // Utilisons le nom du host pour le nom de la room pour l'instant
+      hostName: game.players[0].name,
+      playerCount: game.players.length,
+    }));
+  
+  io.to(LOBBY_ROOM).emit('lobbiesListUpdate', joinableLobbies);
+  loginfo('Broadcasted lobbies list to clients in menu.');
+};
 
 const initEngine = (io) => {
   io.on('connection', (socket) => {
     loginfo(`Socket connected: ${socket.id}`);
+
+    socket.on('enterLobbyBrowser', () => {
+      socket.join(LOBBY_ROOM);
+      loginfo(`Socket ${socket.id} entered lobby browser.`);
+      // Envoie la liste actuelle dès qu'un utilisateur ouvre le menu
+      const joinableLobbies = Object.values(activeGames)
+        .filter(game => game.status === 'lobby')
+        .map(game => ({
+          roomName: game.players[0].name,
+          hostName: game.players[0].name,
+          playerCount: game.players.length,
+        }));
+      socket.emit('lobbiesListUpdate', joinableLobbies);
+    });
+
+    socket.on('leaveLobbyBrowser', () => {
+      socket.leave(LOBBY_ROOM);
+      loginfo(`Socket ${socket.id} left lobby browser.`);
+    });
 
     socket.on('joinGame', ({ roomName, playerName }) => {
       loginfo(`Player ${playerName} (${socket.id}) is joining room '${roomName}'`);
@@ -54,6 +92,8 @@ const initEngine = (io) => {
       
       // Envoie l'état initial à tout le monde dans la room
       io.to(roomName).emit('gameStateUpdate', game.getCurrentGameState());
+      // Met à jour la liste des lobbies pour tout le monde dans le menu
+      broadcastLobbies(io);
     });
 
     socket.on('startGame', () => {
@@ -63,6 +103,8 @@ const initEngine = (io) => {
         loginfo(`Host ${socket.id} is starting the game in room '${roomName}'`);
         game.startGame();
         io.to(roomName).emit('gameStateUpdate', game.getCurrentGameState());
+        // Met à jour la liste des lobbies car cette partie n'est plus joignable
+        broadcastLobbies(io);
       }
     });
 
@@ -92,6 +134,8 @@ const initEngine = (io) => {
           // Informe les autres joueurs de la mise à jour
           io.to(roomName).emit('gameStateUpdate', game.getCurrentGameState());
         }
+        // Met à jour la liste des lobbies car un joueur a quitté (ou la partie a été détruite)
+        broadcastLobbies(io);
       }
     });
   });
