@@ -23,10 +23,10 @@ const gameIntervals = {};
  * @param {Server} io L'instance du serveur Socket.io.
  */
 const broadcastLobbies = (io) => {
-  const joinableLobbies = Object.values(activeGames)
-    .filter(game => game.status === 'lobby')
-    .map(game => ({
-      roomName: game.players[0].name, // Utilisons le nom du host pour le nom de la room pour l'instant
+  const joinableLobbies = Object.entries(activeGames)
+    .filter(([roomName, game]) => game.status === 'lobby')
+    .map(([roomName, game]) => ({
+      roomName: roomName,
       hostName: game.players[0].name,
       playerCount: game.players.length,
     }));
@@ -43,10 +43,10 @@ const initEngine = (io) => {
       socket.join(LOBBY_ROOM);
       loginfo(`Socket ${socket.id} entered lobby browser.`);
       // Envoie la liste actuelle dès qu'un utilisateur ouvre le menu
-      const joinableLobbies = Object.values(activeGames)
-        .filter(game => game.status === 'lobby')
-        .map(game => ({
-          roomName: game.players[0].name,
+      const joinableLobbies = Object.entries(activeGames)
+        .filter(([roomName, game]) => game.status === 'lobby')
+        .map(([roomName, game]) => ({
+          roomName: roomName,
           hostName: game.players[0].name,
           playerCount: game.players.length,
         }));

@@ -13,6 +13,8 @@ export const useGameStore = defineStore('game', {
     gameState: null,
     // La liste des lobbies joignables
     lobbies: [],
+    // Drapeau pour s'assurer que les écouteurs ne sont enregistrés qu'une fois
+    listenersRegistered: false,
   }),
 
   /**
@@ -42,9 +44,12 @@ export const useGameStore = defineStore('game', {
   actions: {
     /**
      * S'abonne aux événements du jeu via le socketService.
-     * Cette méthode est conçue pour être appelée une seule fois.
+     * Cette méthode est idempotent et peut être appelée plusieurs fois sans risque.
      */
     registerGameListeners() {
+      // Garde pour s'assurer que les écouteurs ne sont enregistrés qu'une seule fois.
+      if (this.listenersRegistered) return;
+
       // Met en place les écouteurs pour les événements spécifiques au jeu.
       socketService.on('gameStateUpdate', (newState) => {
         this.gameState = newState;
@@ -59,6 +64,9 @@ export const useGameStore = defineStore('game', {
       socketService.on('disconnect', () => {
         this.gameState = null;
       });
+
+      this.listenersRegistered = true;
+      console.log('GameStore: Listeners registered.');
     },
 
     /**
@@ -67,16 +75,29 @@ export const useGameStore = defineStore('game', {
      * @param {string} playerName Le nom du joueur.
      */
     connectAndJoin(roomName, playerName) {
-      // S'assure que les écouteurs sont en place.
+      // S'assure que les écouteurs globaux sont prêts.
       this.registerGameListeners();
-      
-      // Demande au service de se connecter.
-      socketService.connect();
 
-      // Une fois la connexion établie, rejoint la partie.
+      const joinPayload = { roomName, playerName };
+
+      // Si déjà connecté, on rejoint directement.
+      if (socketState.isConnected) {
+        console.log('Already connected, joining game directly.');
+        socketService.emit('joinGame', joinPayload);
+        return;
+      }
+
+      // Si pas connecté, on se connecte, PUIS on rejoint.
+      // .once() est crucial ici : il garantit que cet écouteur ne s'exécutera qu'une seule fois.
+      // Cela empêche l'accumulation d'écouteurs qui causait le bug de jonctions multiples.
+      console.log('Not connected. Connecting, then joining game...');
       socketService.on('connect', () => {
-        socketService.emit('joinGame', { roomName, playerName });
+        console.log('Connect event received, now joining game.');
+        socketService.emit('joinGame', joinPayload);
       });
+
+      // Déclenche la connexion
+      socketService.connect();
     },
 
     /**
