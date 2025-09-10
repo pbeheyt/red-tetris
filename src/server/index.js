@@ -105,10 +105,19 @@ const initEngine = (io) => {
         game.startGame();
 
         // Démarre la boucle de jeu UNIQUEMENT lorsque la partie commence.
-        gameIntervals[roomName] = setInterval(() => {
+        const intervalId = setInterval(() => {
           const newState = game.tick();
           io.to(roomName).emit('gameStateUpdate', newState);
+
+          // Si le tick nous informe que la partie est terminée, on arrête la boucle.
+          if (newState.status === 'finished') {
+            loginfo(`Game in room '${roomName}' has finished. Stopping game loop.`);
+            clearInterval(intervalId);
+            // On ne supprime pas la partie ici, on la laisse pour consultation
+            // jusqu'à ce que tous les joueurs partent.
+          }
         }, GAME_TICK_MS);
+        gameIntervals[roomName] = intervalId;
 
         io.to(roomName).emit('gameStateUpdate', game.getCurrentGameState());
         // Met à jour la liste des lobbies car cette partie n'est plus joignable

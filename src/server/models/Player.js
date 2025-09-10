@@ -22,6 +22,7 @@ function Player(id, name, isHost = false) {
   this.board = createEmptyBoard(); // Le plateau est maintenant initialisé.
   this.activePiece = null; // La pièce actuellement contrôlée par le joueur.
   this.hasLost = false;
+  this.score = 0;
 }
 
 export default Player;

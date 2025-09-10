@@ -14,6 +14,7 @@ import Piece from './Piece.js';
  * @property {string} id - L'identifiant du joueur.
  * @property {string} name - Le nom du joueur.
  * @property {boolean} hasLost - Si le joueur a perdu.
+ * @property {number} score - Le score actuel du joueur.
  * @property {Array<Array<number>>} board - La grille de jeu du joueur.
  * @property {Object} activePiece - La pièce active du joueur.
  * @property {string} activePiece.shape - La forme de la pièce.
@@ -43,10 +44,14 @@ function Game(hostInfo, pieceSequence) {
  * @returns {GameState} La "photographie" complète et à jour de l'état du jeu.
  */
 Game.prototype.tick = function() {
-  console.log('Game tick');
-  // La logique de descente des pièces, de complétion des lignes, etc., sera implémentée ici.
+  // La boucle de jeu ne doit agir que si la partie est en cours.
+  if (this.status === 'playing') {
+    // console.log('Game tick');
+    // La future logique de descente des pièces, de complétion des lignes, etc., ira ici.
+  }
   
-  // Pour l'instant, on retourne un état factice.
+  // On retourne toujours l'état actuel, même si la partie est finie,
+  // pour que tous les clients reçoivent l'état final.
   return this.getCurrentGameState();
 };
 
@@ -79,6 +84,7 @@ Game.prototype.getCurrentGameState = function() {
       name: player.name,
       isHost: player.isHost,
       hasLost: player.hasLost,
+      score: player.score,
       board: player.board,
       activePiece: player.activePiece,
       nextPieces: [],
@@ -162,6 +168,22 @@ Game.prototype.startGame = function() {
   if (this.status === 'lobby') {
     this.status = 'playing';
     console.log('Game has started!');
+
+    // Logique de score factice : l'hôte gagne 500 points après 3 secondes.
+    // A REMPLACER PAR LA LOGIQUE DU JEU RÉELLE.
+    setTimeout(() => {
+      // Vérifie si la partie est toujours en cours avant de la terminer.
+      if (this.status === 'playing') {
+        const host = this.players.find(p => p.isHost);
+        if (host) {
+          console.log(`Timer finished. Awarding 500 points to host ${host.name}.`);
+          host.score = 500;
+          this.winner = host.name;
+        }
+        this.status = 'finished';
+        console.log('Game status set to finished by timer.');
+      }
+    }, 3000);
   }
 };
 

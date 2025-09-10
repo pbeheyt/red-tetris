@@ -51,18 +51,28 @@ onUnmounted(() => {
     </div>
 
     <!-- Écran de fin de partie -->
+    <!-- Écran de fin de partie -->
     <div v-if="gameStore.gameStatus === 'finished'" class="game-over-container">
       <h2>Partie terminée !</h2>
       <p class="winner-message">Le gagnant est : <strong>{{ gameStore.gameWinner }}</strong></p>
+      
+      <h3>Scores finaux</h3>
+      <ul class="final-scores">
+        <li v-for="player in gameStore.playerList" :key="player.id">
+          {{ player.name }}: <strong>{{ player.score }} points</strong>
+        </li>
+      </ul>
+
       <button @click="handleLeaveGame" class="leave-button">Retourner au menu</button>
     </div>
     
     <!-- Section Lobby -->
     <div v-if="gameStore.gameStatus === 'lobby'" class="lobby-container">
       <h3>En attente de joueurs...</h3>
-      <ul>
+      <ul class="lobby-player-list">
         <li v-for="player in gameStore.playerList" :key="player.id">
-          {{ player.name }} {{ player.isHost ? '(Hôte)' : '' }}
+          <span>{{ player.name }} {{ player.isHost ? '(Hôte)' : '' }}</span>
+          <span>Score: {{ player.score || 0 }}</span>
         </li>
       </ul>
       <button
@@ -195,6 +205,23 @@ onUnmounted(() => {
 
 .start-button:hover {
   background-color: #45a049;
+}
+
+.final-scores {
+  list-style-type: none;
+  padding: 0;
+  margin-bottom: 20px;
+}
+
+.final-scores li {
+  font-size: 1.1em;
+  margin: 5px 0;
+}
+
+.lobby-player-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
 }
 
 .spectator-container {
