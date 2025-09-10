@@ -101,16 +101,26 @@ Game.prototype.addPlayer = function(playerInfo) {
 };
 
 /**
- * Supprime un joueur de la partie.
+ * Supprime un joueur de la partie et gère la migration de l'hôte si nécessaire.
  * @param {string} playerId - L'ID du joueur à supprimer.
  * @returns {number} Le nombre de joueurs restants.
  */
 Game.prototype.removePlayer = function(playerId) {
+  const playerToRemove = this.players.find(p => p.id === playerId);
+  if (!playerToRemove) return this.players.length;
+
+  const wasHost = playerToRemove.isHost;
+
   this.players = this.players.filter(p => p.id !== playerId);
   console.log(`Player ${playerId} removed. Total players: ${this.players.length}`);
 
+  // Si l'hôte est parti et qu'il reste des joueurs, le plus ancien devient le nouvel hôte.
+  if (wasHost && this.players.length > 0) {
+    this.players[0].isHost = true;
+    console.log(`Host migrated to player ${this.players[0].name} (${this.players[0].id}).`);
+  }
+
   // Si la partie était en cours et qu'il ne reste qu'un joueur, ce joueur gagne.
-  // La boucle de jeu continue pour lui permettre de jouer pour le score.
   if (this.status === 'playing' && this.players.length === 1) {
     this.status = 'finished';
     this.winner = this.players[0].name;
