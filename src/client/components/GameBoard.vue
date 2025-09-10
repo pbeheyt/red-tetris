@@ -134,7 +134,6 @@ const framedGrid = computed(() => {
 
 <template>
   <div class="game-board">
-    <div class="well">
       <div class="board-grid" :style="{ '--cols': displayCols, '--rows': displayRows, '--tile-size': props.tileSize + 'px' }">
         <template v-for="(row, y) in framedGrid" :key="y">
           <div
@@ -146,7 +145,6 @@ const framedGrid = computed(() => {
         </template>
       </div>
     </div>
-  </div>
 </template>
 
 <style scoped>
@@ -155,13 +153,6 @@ const framedGrid = computed(() => {
   background-color: transparent;
   display: inline-block;
 }
-.well {
-  background-color: #000;
-  border: none;
-  border-radius: 8px;
-  padding: 4px;
-  box-shadow: none;
-}
 .board-grid {
   --tile-size: 24px;
   display: grid;
@@ -169,7 +160,10 @@ const framedGrid = computed(() => {
   grid-template-rows: repeat(var(--rows), var(--tile-size));
   gap: 1px;
   background-color: #111;
-  border-radius: 4px;
+  /* Prevent overflow: size is exactly tiles + gaps */
+  width: calc(var(--cols) * var(--tile-size) + (var(--cols) - 1) * 1px);
+  height: calc(var(--rows) * var(--tile-size) + (var(--rows) - 1) * 1px);
+  padding: 5px;
 }
 .tile {
   width: var(--tile-size);
