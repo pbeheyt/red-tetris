@@ -5,6 +5,7 @@ import { useGameStore } from '../stores/gameStore';
 import { state as socketState } from '../services/socketService.js';
 import GameBoard from '../components/GameBoard.vue';
 import MultiBoardGrid from '../components/MultiBoardGrid.vue';
+import { DEMO_BOARD, DEMO_ACTIVE_PIECE } from '../../shared/demoBoards.js';
 
 const gameStore = useGameStore();
 const route = useRoute();
@@ -96,8 +97,8 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
       <!-- Single board fallback -->
       <GameBoard
         v-else
-        :board="gameStore.board"
-        :active-piece="gameStore.activePiece"
+        :board="DEMO_BOARD"
+        :active-piece="DEMO_ACTIVE_PIECE"
         @player-action="handlePlayerAction"
       />
     </template>
@@ -148,6 +149,8 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
 
 .game-container {
   margin-top: 20px;
+  display: flex;
+  flex-direction: column;
 }
 
 .lobby-container {

@@ -105,33 +105,62 @@ function resolveCellColor(val) {
     return (key && TETROMINO_COLORS[key]) || '#777';
   }
   if (typeof val === 'string') {
+    // Allow direct CSS colors like '#787878'
+    if (val.startsWith && val.startsWith('#')) return val;
     return TETROMINO_COLORS[val] || '#777';
   }
   if (typeof val === 'object' && val.color) return val.color;
   return '#777';
 }
+
+// Create a framed grid with one-tile border around playfield using #787878 tiles
+const FRAME_COLOR = '#787878';
+const displayCols = computed(() => cols.value + 2);
+const displayRows = computed(() => rows.value + 2);
+const framedGrid = computed(() => {
+  const inner = mergedGrid.value;
+  const out = Array.from({ length: displayRows.value }, (_, oy) =>
+    Array.from({ length: displayCols.value }, (_, ox) => {
+      const isBorder = oy === 0 || oy === displayRows.value - 1 || ox === 0 || ox === displayCols.value - 1;
+      if (isBorder) return FRAME_COLOR; // hex color string handled by resolver
+      const iy = oy - 1;
+      const ix = ox - 1;
+      return inner[iy]?.[ix] ?? CELL_EMPTY;
+    })
+  );
+  return out;
+});
 </script>
 
 <template>
   <div class="game-board">
-    <div class="board-grid" :style="{ '--cols': cols, '--rows': rows, '--tile-size': props.tileSize + 'px' }">
-      <template v-for="(row, y) in mergedGrid" :key="y">
-        <div
-          v-for="(cell, x) in row"
-          :key="x"
-          class="tile"
-          :style="{ backgroundColor: resolveCellColor(cell) }"
-        />
-      </template>
+    <div class="well">
+      <div class="board-grid" :style="{ '--cols': displayCols, '--rows': displayRows, '--tile-size': props.tileSize + 'px' }">
+        <template v-for="(row, y) in framedGrid" :key="y">
+          <div
+            v-for="(cell, x) in row"
+            :key="x"
+            class="tile"
+            :style="{ backgroundColor: resolveCellColor(cell) }"
+          />
+        </template>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .game-board {
-  border: 2px solid #333;
   padding: 8px;
-  background-color: #0e0e0e;
+  background-color: transparent;
+  display: inline-block;
+}
+.well {
+  background-color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: none;
 }
 .board-grid {
   --tile-size: 24px;
@@ -139,13 +168,16 @@ function resolveCellColor(val) {
   grid-template-columns: repeat(var(--cols), var(--tile-size));
   grid-template-rows: repeat(var(--rows), var(--tile-size));
   gap: 1px;
-  background-color: #222;
+  background-color: #111;
+  border-radius: 4px;
 }
 .tile {
   width: var(--tile-size);
   height: var(--tile-size);
   background-color: transparent;
-  border: 1px solid #111;
+  border: none;
   box-sizing: border-box;
+  border-radius: 3px;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.25);
 }
 </style>
