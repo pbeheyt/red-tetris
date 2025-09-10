@@ -1,9 +1,10 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, ref, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useGameStore } from '../stores/gameStore';
 import { state as socketState } from '../services/socketService.js';
 import GameBoard from '../components/GameBoard.vue';
+import MultiBoardGrid from '../components/MultiBoardGrid.vue';
 
 const gameStore = useGameStore();
 const route = useRoute();
@@ -36,10 +37,20 @@ onMounted(() => {
 onUnmounted(() => {
   gameStore.leaveGame();
 });
+
+// Responsive width tracking for MultiBoardGrid (to avoid horizontal scrolling)
+const containerRef = ref(null);
+const containerWidth = ref(0);
+function updateWidth() {
+  containerWidth.value = containerRef.value?.clientWidth || 0;
+}
+window.addEventListener('resize', updateWidth);
+onMounted(updateWidth);
+onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
 </script>
 
 <template>
-  <div class="game-container">
+  <div class="game-container" ref="containerRef">
     <div class="game-header">
       <div>
         <p>Partie : <strong>{{ route.params.roomName }}</strong></p>
@@ -55,7 +66,7 @@ onUnmounted(() => {
       <p class="winner-message">Le gagnant est : <strong>{{ gameStore.gameWinner }}</strong></p>
       <button @click="handleLeaveGame" class="leave-button">Retourner au menu</button>
     </div>
-    
+
     <!-- Section Lobby -->
     <div v-if="gameStore.gameStatus === 'lobby'" class="lobby-container">
       <h3>En attente de joueurs...</h3>
@@ -75,12 +86,21 @@ onUnmounted(() => {
     </div>
 
     <!-- Section Jeu -->
-    <GameBoard
-      v-if="gameStore.gameStatus === 'playing' || (gameStore.gameStatus === 'finished' && gameStore.currentPlayer)"
-      :board="gameStore.board"
-      :active-piece="gameStore.activePiece"
-      @player-action="handlePlayerAction"
-    />
+    <template v-if="gameStore.gameStatus === 'playing' || (gameStore.gameStatus === 'finished' && gameStore.currentPlayer)">
+      <!-- Multi-board view if more than one player -->
+      <MultiBoardGrid
+        v-if="(gameStore.playerList?.length || 0) > 1"
+        :players="gameStore.playerList"
+        :container-width="containerWidth"
+      />
+      <!-- Single board fallback -->
+      <GameBoard
+        v-else
+        :board="gameStore.board"
+        :active-piece="gameStore.activePiece"
+        @player-action="handlePlayerAction"
+      />
+    </template>
   </div>
 </template>
 
