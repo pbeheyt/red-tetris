@@ -2,6 +2,7 @@
 import { onUnmounted, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
 import { useGameStore } from '../stores/gameStore';
+import { state as socketState } from '../services/socketService.js';
 import GameBoard from '../components/GameBoard.vue';
 
 const gameStore = useGameStore();
@@ -21,15 +22,15 @@ watchEffect(() => {
   const { roomName, playerName } = route.params;
 
   // On s'assure que les paramètres sont présents ET que nous ne sommes pas déjà connectés.
-  // Cela empêche les reconnexions multiples si l'URL changeait pour une raison quelconque.
-  if (roomName && playerName && !gameStore.isConnected) {
-    console.log(`Connexion à la partie '${roomName}' en tant que '${playerName}'`);
-    gameStore.initializeSocket(roomName, playerName);
+  // Cela empêche les reconnexions multiples.
+  if (roomName && playerName && !socketState.isConnected) {
+    console.log(`Déclenchement de la connexion à la partie '${roomName}' en tant que '${playerName}'`);
+    gameStore.connectAndJoin(roomName, playerName);
   }
 });
 
 onUnmounted(() => {
-  gameStore.disconnectSocket();
+  gameStore.disconnectFromGame();
 });
 </script>
 
@@ -37,7 +38,7 @@ onUnmounted(() => {
   <div class="game-container">
     <p>Partie : <strong>{{ route.params.roomName }}</strong></p>
     <p>Joueur : <strong>{{ route.params.playerName }}</strong></p>
-    <p>État : <strong :style="{ color: gameStore.isConnected ? 'green' : 'red' }">{{ gameStore.isConnected ? 'Connecté' : 'En cours de connexion...' }}</strong></p>
+    <p>État : <strong :style="{ color: socketState.isConnected ? 'green' : 'red' }">{{ socketState.isConnected ? 'Connecté' : 'En cours de connexion...' }}</strong></p>
     
     <!-- Section Lobby -->
     <div v-if="gameStore.gameStatus === 'lobby'" class="lobby-container">
