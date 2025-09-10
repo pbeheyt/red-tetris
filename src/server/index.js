@@ -120,11 +120,16 @@ const initEngine = (io) => {
       }
     });
 
-    socket.on('disconnect', () => {
-      loginfo(`Socket disconnected: ${socket.id}`);
+    /**
+     * Gère la logique de départ d'un joueur, que ce soit par déconnexion
+     * ou en quittant volontairement la partie.
+     * @param {import('socket.io').Socket} socket Le socket du joueur qui part.
+     */
+    const handlePlayerLeave = (socket) => {
       const roomName = socket.data.roomName;
-      const game = activeGames[roomName];
+      if (!roomName) return; // Le joueur n'était dans aucune partie
 
+      const game = activeGames[roomName];
       if (game) {
         const playersLeft = game.removePlayer(socket.id);
         if (playersLeft === 0) {
@@ -139,6 +144,18 @@ const initEngine = (io) => {
         // Met à jour la liste des lobbies car un joueur a quitté (ou la partie a été détruite)
         broadcastLobbies(io);
       }
+    };
+
+    socket.on('leaveGame', () => {
+      loginfo(`Player ${socket.id} is leaving the game via button.`);
+      handlePlayerLeave(socket);
+      // Oublie la room pour ce socket pour éviter une double action à la déconnexion
+      socket.data.roomName = null;
+    });
+
+    socket.on('disconnect', () => {
+      loginfo(`Socket disconnected: ${socket.id}`);
+      handlePlayerLeave(socket);
     });
   });
 };

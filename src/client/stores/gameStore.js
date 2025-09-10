@@ -125,10 +125,13 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
-     * Demande au service de se déconnecter et nettoie l'état local.
+     * Informe le serveur que le joueur quitte la partie et nettoie l'état local.
+     * La connexion socket reste active.
      */
-    disconnectFromGame() {
-      socketService.disconnect();
+    leaveGame() {
+      if (socketState.isConnected) {
+        socketService.emit('leaveGame');
+      }
       this.gameState = null; // Nettoyage immédiat de l'état côté client
     },
 

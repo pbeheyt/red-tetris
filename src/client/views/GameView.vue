@@ -18,7 +18,7 @@ const handleStartGame = () => {
 };
 
 const handleLeaveGame = () => {
-  gameStore.disconnectFromGame();
+  gameStore.leaveGame();
   router.push('/menu');
 };
 
@@ -34,7 +34,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  gameStore.disconnectFromGame();
+  gameStore.leaveGame();
 });
 </script>
 
