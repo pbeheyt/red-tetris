@@ -43,11 +43,27 @@ const initEngine = (io) => {
       } else {
         // Les joueurs suivants rejoignent la partie existante
         loginfo(`Player ${playerName} is joining existing game in room '${roomName}'`);
-        game.addPlayer({ id: socket.id, name: playerName });
+        const added = game.addPlayer({ id: socket.id, name: playerName });
+        if (!added) {
+          // Gérer le cas où la partie est déjà commencée
+          socket.emit('error', { message: 'La partie a déjà commencé.' });
+          socket.disconnect();
+          return;
+        }
       }
       
       // Envoie l'état initial à tout le monde dans la room
       io.to(roomName).emit('gameStateUpdate', game.getCurrentGameState());
+    });
+
+    socket.on('startGame', () => {
+      const roomName = socket.data.roomName;
+      const game = activeGames[roomName];
+      if (game && game.players[0].id === socket.id) { // Vérifie si le joueur est l'hôte
+        loginfo(`Host ${socket.id} is starting the game in room '${roomName}'`);
+        game.startGame();
+        io.to(roomName).emit('gameStateUpdate', game.getCurrentGameState());
+      }
     });
 
     socket.on('playerAction', (action) => {

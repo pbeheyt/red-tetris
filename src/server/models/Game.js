@@ -32,7 +32,7 @@ import Piece from './Piece.js';
 function Game(hostInfo, pieceSequence) {
   this.players = [new Player(hostInfo.id, hostInfo.name, true)];
   this.pieceSequence = pieceSequence;
-  this.status = 'playing'; // 'playing' | 'finished'
+  this.status = 'lobby'; // 'lobby' | 'playing' | 'finished'
 }
 
 /**
@@ -74,6 +74,7 @@ Game.prototype.getCurrentGameState = function() {
     players: this.players.map(player => ({
       id: player.id,
       name: player.name,
+      isHost: player.isHost,
       hasLost: player.hasLost,
       board: player.board,
       activePiece: player.activePiece,
@@ -85,11 +86,17 @@ Game.prototype.getCurrentGameState = function() {
 /**
  * Ajoute un nouveau joueur à la partie.
  * @param {Object} playerInfo - Informations sur le joueur ({ id, name }).
+ * @returns {boolean} - True si le joueur a été ajouté, false sinon.
  */
 Game.prototype.addPlayer = function(playerInfo) {
+  if (this.status !== 'lobby') {
+    console.log(`Game is already playing. Cannot add player ${playerInfo.name}.`);
+    return false;
+  }
   const newPlayer = new Player(playerInfo.id, playerInfo.name, false);
   this.players.push(newPlayer);
   console.log(`Player ${playerInfo.name} added to the game. Total players: ${this.players.length}`);
+  return true;
 };
 
 /**
@@ -101,6 +108,16 @@ Game.prototype.removePlayer = function(playerId) {
   this.players = this.players.filter(p => p.id !== playerId);
   console.log(`Player ${playerId} removed. Total players: ${this.players.length}`);
   return this.players.length;
+};
+
+/**
+ * Démarre la partie, changeant son statut de 'lobby' à 'playing'.
+ */
+Game.prototype.startGame = function() {
+  if (this.status === 'lobby') {
+    this.status = 'playing';
+    console.log('Game has started!');
+  }
 };
 
 export default Game;

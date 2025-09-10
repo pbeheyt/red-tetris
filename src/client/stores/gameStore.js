@@ -39,6 +39,12 @@ export const useGameStore = defineStore('game', {
     board: (state) => state.currentPlayer?.board || [],
     // Renvoie la pièce active du joueur actuel
     activePiece: (state) => state.currentPlayer?.activePiece || null,
+    // Renvoie le statut global de la partie
+    gameStatus: (state) => state.gameState?.status || 'disconnected',
+    // Vérifie si le joueur actuel est l'hôte de la partie
+    isCurrentUserHost: (state) => state.currentPlayer?.isHost || false,
+    // Renvoie la liste de tous les joueurs dans la partie
+    playerList: (state) => state.gameState?.players || [],
   },
 
   /**
@@ -105,6 +111,17 @@ export const useGameStore = defineStore('game', {
         return;
       }
       socket.emit('playerAction', action);
+    },
+
+    /**
+     * Informe le serveur que l'hôte souhaite démarrer la partie.
+     */
+    sendStartGame() {
+      if (!this.isConnected) {
+        console.warn("Impossible de démarrer la partie : non connecté.");
+        return;
+      }
+      socket.emit('startGame');
     },
 
     /**
