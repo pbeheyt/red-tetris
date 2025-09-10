@@ -170,7 +170,6 @@ Game.prototype.startGame = function() {
     console.log('Game has started!');
 
     // Logique de score factice : l'hôte gagne 500 points après 3 secondes.
-    // A REMPLACER PAR LA LOGIQUE DU JEU RÉELLE.
     setTimeout(() => {
       // Vérifie si la partie est toujours en cours avant de la terminer.
       if (this.status === 'playing') {
