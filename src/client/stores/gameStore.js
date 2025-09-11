@@ -13,6 +13,8 @@ export const useGameStore = defineStore('game', {
     gameState: null,
     // La liste des lobbies joignables
     lobbies: [],
+    // Le classement des meilleurs scores
+    leaderboard: [],
     // Drapeau pour s'assurer que les écouteurs ne sont enregistrés qu'une fois
     listenersRegistered: false,
   }),
@@ -67,6 +69,11 @@ export const useGameStore = defineStore('game', {
       // Écouteur pour la mise à jour de la liste des lobbies
       socketService.on('lobbiesListUpdate', (lobbiesList) => {
         this.lobbies = lobbiesList;
+      });
+
+      // Écouteur pour la mise à jour du leaderboard
+      socketService.on('leaderboardUpdate', (leaderboardData) => {
+        this.leaderboard = leaderboardData;
       });
 
       this.listenersRegistered = true;
@@ -165,6 +172,19 @@ export const useGameStore = defineStore('game', {
      */
     leaveLobbyBrowser() {
       socketService.emit('leaveLobbyBrowser');
+    },
+
+    /**
+     * Demande au serveur d'envoyer les données du leaderboard.
+     */
+    fetchLeaderboard() {
+      if (socketState.isConnected) {
+        socketService.emit('getLeaderboard');
+      } else {
+        socketService.once('connect', () => {
+          socketService.emit('getLeaderboard');
+        });
+      }
     },
   },
 });
