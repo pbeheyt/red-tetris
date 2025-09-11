@@ -1,9 +1,11 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, ref, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useGameStore } from '../stores/gameStore';
 import { state as socketState } from '../services/socketService.js';
 import GameBoard from '../components/GameBoard.vue';
+import MultiBoardGrid from '../components/MultiBoardGrid.vue';
+import { DEMO_BOARD, DEMO_ACTIVE_PIECE } from '../../shared/demoBoards.js';
 
 const gameStore = useGameStore();
 const route = useRoute();
@@ -37,10 +39,20 @@ onMounted(() => {
 onUnmounted(() => {
   gameStore.leaveGame();
 });
+
+// Responsive width tracking for MultiBoardGrid (to avoid horizontal scrolling)
+const containerRef = ref(null);
+const containerWidth = ref(0);
+function updateWidth() {
+  containerWidth.value = containerRef.value?.clientWidth || 0;
+}
+window.addEventListener('resize', updateWidth);
+onMounted(updateWidth);
+onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
 </script>
 
 <template>
-  <div class="game-container">
+  <div class="game-container" ref="containerRef">
     <div class="game-header">
       <div>
         <p>Partie : <strong>{{ route.params.roomName }}</strong></p>
@@ -65,7 +77,7 @@ onUnmounted(() => {
 
       <button @click="handleLeaveGame" class="leave-button">Retourner au menu</button>
     </div>
-    
+
     <!-- Section Lobby -->
     <div v-if="gameStore.gameStatus === 'lobby'" class="lobby-container">
       <h3>En attente de joueurs...</h3>
@@ -86,14 +98,29 @@ onUnmounted(() => {
     </div>
 
     <!-- Section Jeu (pour les joueurs) -->
-    <div v-if="!gameStore.isCurrentUserSpectator">
+    <!-- <div v-if="!gameStore.isCurrentUserSpectator">
       <GameBoard
         v-if="gameStore.gameStatus === 'playing' || (gameStore.gameStatus === 'finished' && gameStore.currentPlayer)"
         :board="gameStore.board"
         :active-piece="gameStore.activePiece"
         @player-action="handlePlayerAction"
       />
-    </div>
+    </div> -->
+    <template v-if="gameStore.gameStatus === 'playing' || (gameStore.gameStatus === 'finished' && gameStore.currentPlayer)">
+      <!-- Multi-board view if more than one player -->
+      <MultiBoardGrid
+        v-if="(gameStore.playerList?.length || 0) > 1"
+        :players="gameStore.playerList"
+        :container-width="containerWidth"
+      />
+      <!-- Single board fallback -->
+      <GameBoard
+        v-else
+        :board="DEMO_BOARD"
+        :active-piece="DEMO_ACTIVE_PIECE"
+        @player-action="handlePlayerAction"
+      />
+    </template>
 
     <!-- Section Spectateur -->
     <div v-if="gameStore.isCurrentUserSpectator" class="spectator-container">
@@ -119,7 +146,6 @@ onUnmounted(() => {
       </div>
       <!-- À l'avenir, on pourrait afficher les plateaux de tous les joueurs ici -->
     </div>
-
   </div>
 </template>
 
@@ -167,6 +193,8 @@ onUnmounted(() => {
 
 .game-container {
   margin-top: 20px;
+  display: flex;
+  flex-direction: column;
 }
 
 .lobby-container {
