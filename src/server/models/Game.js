@@ -1,5 +1,6 @@
 import Player from './Player.js';
 import Piece from './Piece.js';
+import { addScore } from '../services/databaseService.js';
 
 /**
  * @typedef {Object} GameState
@@ -164,25 +165,38 @@ Game.prototype.removeSpectator = function(spectatorId) {
 /**
  * Démarre la partie, changeant son statut de 'lobby' à 'playing'.
  */
+/**
+ * Démarre la partie, changeant son statut de 'lobby' à 'playing'.
+ */
 Game.prototype.startGame = function() {
   if (this.status === 'lobby') {
     this.status = 'playing';
     console.log('Game has started!');
 
-    // Logique de score factice : l'hôte gagne 500 points après 3 secondes.
+    // Logique de fin de partie et de sauvegarde des scores.
+    // Pour l'instant, on simule une fin de partie après 5 secondes.
+    // À l'avenir, la fin de partie sera déclenchée par la logique du jeu (ex: un seul joueur restant).
     setTimeout(() => {
-      // Vérifie si la partie est toujours en cours avant de la terminer.
-      if (this.status === 'playing') {
-        const host = this.players.find(p => p.isHost);
-        if (host) {
-          console.log(`Timer finished. Awarding 500 points to host ${host.name}.`);
-          host.score = 500;
-          this.winner = host.name;
-        }
-        this.status = 'finished';
-        console.log('Game status set to finished by timer.');
-      }
-    }, 3000);
+      if (this.status !== 'playing') return;
+
+      // Logique de score factice : chaque joueur obtient un score aléatoire.
+      this.players.forEach(player => {
+        player.score = Math.floor(Math.random() * 1000);
+      });
+
+      // Trouve le gagnant (celui avec le plus haut score)
+      const winner = this.players.reduce((prev, current) => (prev.score > current.score) ? prev : current, {});
+      this.winner = winner.name || 'Personne';
+
+      this.status = 'finished';
+      console.log(`Game finished. Winner: ${this.winner}. Saving scores...`);
+
+      // Sauvegarde chaque score dans la base de données.
+      this.players.forEach(player => {
+        addScore({ name: player.name, score: player.score });
+      });
+
+    }, 5000);
   }
 };
 

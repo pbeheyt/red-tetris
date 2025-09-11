@@ -6,6 +6,7 @@ import { GAME_TICK_MS } from '../shared/constants.js'
 import debug from 'debug'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { initializeDatabase, getLeaderboard } from './services/databaseService.js'
 
 const logerror = debug('tetris:error')
 const loginfo = debug('tetris:info')
@@ -56,6 +57,12 @@ const initEngine = (io) => {
     socket.on('leaveLobbyBrowser', () => {
       socket.leave(LOBBY_ROOM);
       loginfo(`Socket ${socket.id} left lobby browser.`);
+    });
+
+    socket.on('getLeaderboard', async () => {
+      loginfo(`Socket ${socket.id} requested leaderboard.`);
+      const leaderboardData = await getLeaderboard();
+      socket.emit('leaderboardUpdate', leaderboardData);
     });
 
     socket.on('joinGame', ({ roomName, playerName, isSpectator }) => {
@@ -183,7 +190,10 @@ const initEngine = (io) => {
 };
 
 export const start = (params) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    // Initialise la base de données avant toute chose
+    await initializeDatabase();
+
     const app = express()
     const server = http.createServer(app)
     const io = new Server(server, {
