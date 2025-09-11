@@ -1,5 +1,12 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, computed } from 'vue';
+import {
+  BOARD_WIDTH,
+  BOARD_HEIGHT,
+  CELL_EMPTY,
+  TETROMINO_COLORS,
+  ID_TO_TETROMINO,
+} from '../../shared/constants.js';
 
 // Contrat n°3 : "Câbles d'Entrée" (Props)
 // Le composant attend de recevoir le plateau de jeu et la pièce active.
@@ -13,6 +20,11 @@ const props = defineProps({
     type: Object,
     required: false,
     default: null,
+  },
+  tileSize: {
+    type: Number,
+    required: false,
+    default: 24,
   },
 });
 
@@ -55,26 +67,111 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown);
 });
+
+// Dimensions de secours si le plateau n'est pas fourni
+const cols = computed(() => (props.board?.[0]?.length ?? BOARD_WIDTH));
+const rows = computed(() => (props.board?.length ?? BOARD_HEIGHT));
+
+// Fusionne le plateau avec la pièce active (superposition)
+const mergedGrid = computed(() => {
+  const base = Array.from({ length: rows.value }, (_, y) => {
+    return Array.from({ length: cols.value }, (_, x) => (props.board?.[y]?.[x] ?? CELL_EMPTY));
+  });
+
+  const piece = props.activePiece;
+  if (!piece || !piece.shape || !piece.position) return base;
+
+  const pieceKey = (piece.kind || piece.type || piece.id);
+  const letter = typeof pieceKey === 'number' ? (ID_TO_TETROMINO[pieceKey] || 'T') : (pieceKey || 'T');
+
+  for (let py = 0; py < piece.shape.length; py++) {
+    for (let px = 0; px < piece.shape[py].length; px++) {
+      const cell = piece.shape[py][px];
+      if (!cell) continue;
+      const gx = (piece.position.x || 0) + px;
+      const gy = (piece.position.y || 0) + py;
+      if (gy >= 0 && gy < rows.value && gx >= 0 && gx < cols.value) {
+        base[gy][gx] = letter; // Marque avec la lettre du Tetrimino actif
+      }
+    }
+  }
+  return base;
+});
+
+function resolveCellColor(val) {
+  if (!val || val === CELL_EMPTY) return 'transparent';
+  if (typeof val === 'number') {
+    const key = ID_TO_TETROMINO[val];
+    return (key && TETROMINO_COLORS[key]) || '#777';
+  }
+  if (typeof val === 'string') {
+    // Allow direct CSS colors like '#787878'
+    if (val.startsWith && val.startsWith('#')) return val;
+    return TETROMINO_COLORS[val] || '#777';
+  }
+  if (typeof val === 'object' && val.color) return val.color;
+  return '#777';
+}
+
+// Create a framed grid with one-tile border around playfield using #787878 tiles
+const FRAME_COLOR = '#787878';
+const displayCols = computed(() => cols.value + 2);
+const displayRows = computed(() => rows.value + 2);
+const framedGrid = computed(() => {
+  const inner = mergedGrid.value;
+  const out = Array.from({ length: displayRows.value }, (_, oy) =>
+    Array.from({ length: displayCols.value }, (_, ox) => {
+      const isBorder = oy === 0 || oy === displayRows.value - 1 || ox === 0 || ox === displayCols.value - 1;
+      if (isBorder) return FRAME_COLOR; // hex color string handled by resolver
+      const iy = oy - 1;
+      const ix = ox - 1;
+      return inner[iy]?.[ix] ?? CELL_EMPTY;
+    })
+  );
+  return out;
+});
 </script>
 
 <template>
   <div class="game-board">
-    <p>Ceci est le plateau de jeu (GameBoard.vue).</p>
-    <p>Appuyez sur les flèches ou la barre d'espace.</p>
-    <div v-if="board.length === 0" class="placeholder">
-      Le plateau est en cours de chargement...
+      <div class="board-grid" :style="{ '--cols': displayCols, '--rows': displayRows, '--tile-size': props.tileSize + 'px' }">
+        <template v-for="(row, y) in framedGrid" :key="y">
+          <div
+            v-for="(cell, x) in row"
+            :key="x"
+            class="tile"
+            :style="{ backgroundColor: resolveCellColor(cell) }"
+          />
+        </template>
+      </div>
     </div>
-    <!-- Le rendu réel du plateau et de la pièce sera implémenté ici -->
-  </div>
 </template>
 
 <style scoped>
 .game-board {
-  border: 2px solid #333;
-  padding: 20px;
-  background-color: #f0f0f0;
+  padding: 8px;
+  background-color: transparent;
+  display: inline-block;
 }
-.placeholder {
-  color: #888;
+.board-grid {
+  --tile-size: 24px;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--tile-size));
+  grid-template-rows: repeat(var(--rows), var(--tile-size));
+  gap: 1px;
+  background-color: #111;
+  /* Prevent overflow: size is exactly tiles + gaps */
+  width: calc(var(--cols) * var(--tile-size) + (var(--cols) - 1) * 1px);
+  height: calc(var(--rows) * var(--tile-size) + (var(--rows) - 1) * 1px);
+  padding: 5px;
+}
+.tile {
+  width: var(--tile-size);
+  height: var(--tile-size);
+  background-color: transparent;
+  border: none;
+  box-sizing: border-box;
+  border-radius: 3px;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.25);
 }
 </style>
