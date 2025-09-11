@@ -1,11 +1,13 @@
 import Player from './Player.js';
 import Piece from './Piece.js';
+import { addScore } from '../services/databaseService.js';
 
 /**
  * @typedef {Object} GameState
- * @property {('playing'|'finished')} status - L'état actuel de la partie.
+ * @property {('lobby'|'playing'|'finished')} status - L'état actuel de la partie.
  * @property {string|null} winner - Le nom du gagnant si la partie est terminée.
  * @property {Array<PlayerState>} players - La liste des états de chaque joueur.
+ * @property {Array<{id: string, name: string}>} spectators - La liste des spectateurs.
  */
 
 /**
@@ -13,6 +15,7 @@ import Piece from './Piece.js';
  * @property {string} id - L'identifiant du joueur.
  * @property {string} name - Le nom du joueur.
  * @property {boolean} hasLost - Si le joueur a perdu.
+ * @property {number} score - Le score actuel du joueur.
  * @property {Array<Array<number>>} board - La grille de jeu du joueur.
  * @property {Object} activePiece - La pièce active du joueur.
  * @property {string} activePiece.shape - La forme de la pièce.
@@ -31,6 +34,7 @@ import Piece from './Piece.js';
  */
 function Game(hostInfo, pieceSequence) {
   this.players = [new Player(hostInfo.id, hostInfo.name, true)];
+  this.spectators = [];
   this.pieceSequence = pieceSequence;
   this.status = 'lobby'; // 'lobby' | 'playing' | 'finished'
   this.winner = null;
@@ -41,10 +45,14 @@ function Game(hostInfo, pieceSequence) {
  * @returns {GameState} La "photographie" complète et à jour de l'état du jeu.
  */
 Game.prototype.tick = function() {
-  console.log('Game tick');
-  // La logique de descente des pièces, de complétion des lignes, etc., sera implémentée ici.
+  // La boucle de jeu ne doit agir que si la partie est en cours.
+  if (this.status === 'playing') {
+    // console.log('Game tick');
+    // La future logique de descente des pièces, de complétion des lignes, etc., ira ici.
+  }
   
-  // Pour l'instant, on retourne un état factice.
+  // On retourne toujours l'état actuel, même si la partie est finie,
+  // pour que tous les clients reçoivent l'état final.
   return this.getCurrentGameState();
 };
 
@@ -77,10 +85,12 @@ Game.prototype.getCurrentGameState = function() {
       name: player.name,
       isHost: player.isHost,
       hasLost: player.hasLost,
+      score: player.score,
       board: player.board,
       activePiece: player.activePiece,
       nextPieces: [],
     })),
+    spectators: this.spectators,
   };
 };
 
@@ -97,6 +107,19 @@ Game.prototype.addPlayer = function(playerInfo) {
   const newPlayer = new Player(playerInfo.id, playerInfo.name, false);
   this.players.push(newPlayer);
   console.log(`Player ${playerInfo.name} added to the game. Total players: ${this.players.length}`);
+  return true;
+};
+
+/**
+ * Ajoute un nouveau spectateur à la partie.
+ * @param {Object} spectatorInfo - Informations sur le spectateur ({ id, name }).
+ * @returns {boolean} - Toujours true.
+ */
+Game.prototype.addSpectator = function(spectatorInfo) {
+  if (!this.spectators.some(s => s.id === spectatorInfo.id)) {
+    this.spectators.push({ id: spectatorInfo.id, name: spectatorInfo.name });
+    console.log(`Spectator ${spectatorInfo.name} added. Total spectators: ${this.spectators.length}`);
+  }
   return true;
 };
 
@@ -131,12 +154,49 @@ Game.prototype.removePlayer = function(playerId) {
 };
 
 /**
+ * Supprime un spectateur de la partie.
+ * @param {string} spectatorId - L'ID du spectateur à supprimer.
+ */
+Game.prototype.removeSpectator = function(spectatorId) {
+  this.spectators = this.spectators.filter(s => s.id !== spectatorId);
+  console.log(`Spectator ${spectatorId} removed. Total spectators: ${this.spectators.length}`);
+};
+
+/**
+ * Démarre la partie, changeant son statut de 'lobby' à 'playing'.
+ */
+/**
  * Démarre la partie, changeant son statut de 'lobby' à 'playing'.
  */
 Game.prototype.startGame = function() {
   if (this.status === 'lobby') {
     this.status = 'playing';
     console.log('Game has started!');
+
+    // Logique de fin de partie et de sauvegarde des scores.
+    // Pour l'instant, on simule une fin de partie après 5 secondes.
+    // À l'avenir, la fin de partie sera déclenchée par la logique du jeu (ex: un seul joueur restant).
+    setTimeout(() => {
+      if (this.status !== 'playing') return;
+
+      // Logique de score factice : chaque joueur obtient un score aléatoire.
+      this.players.forEach(player => {
+        player.score = Math.floor(Math.random() * 1000);
+      });
+
+      // Trouve le gagnant (celui avec le plus haut score)
+      const winner = this.players.reduce((prev, current) => (prev.score > current.score) ? prev : current, {});
+      this.winner = winner.name || 'Personne';
+
+      this.status = 'finished';
+      console.log(`Game finished. Winner: ${this.winner}. Saving scores...`);
+
+      // Sauvegarde chaque score dans la base de données.
+      this.players.forEach(player => {
+        addScore({ name: player.name, score: player.score });
+      });
+
+    }, 5000);
   }
 };
 

@@ -14,9 +14,10 @@ if (!userStore.playerName) {
   router.push('/');
 }
 
-// S'abonne aux mises à jour du lobby en entrant dans la vue
+// S'abonne aux mises à jour et charge les données initiales en entrant dans la vue
 onMounted(() => {
   gameStore.enterLobbyBrowser();
+  gameStore.fetchLeaderboard();
 });
 
 // Se désabonne en quittant la vue pour ne pas recevoir de mises à jour inutiles
@@ -40,6 +41,10 @@ const createMultiplayerGame = () => {
 
 const joinGame = (roomName) => {
   router.push(`/${roomName}/${userStore.playerName}`);
+};
+
+const spectateGame = (roomName) => {
+  router.push(`/${roomName}/${userStore.playerName}?spectate=true`);
 };
 
 const handleChangeName = () => {
@@ -78,7 +83,7 @@ const handleChangeName = () => {
               <th>Nom de la Partie</th>
               <th>Hôte</th>
               <th>Joueurs</th>
-              <th>Action</th>
+              <th colspan="2">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -89,12 +94,42 @@ const handleChangeName = () => {
               <td>
                 <button @click="joinGame(lobby.roomName)" class="join-button">Rejoindre</button>
               </td>
+              <td>
+                <button @click="spectateGame(lobby.roomName)" class="spectate-button">Spectateur</button>
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
       <div v-else class="no-lobbies-message">
         <p>Aucune partie en attente pour le moment. Pourquoi ne pas en créer une ?</p>
+      </div>
+    </div>
+
+    <div class="leaderboard">
+      <h3>🏆 Leaderboard 🏆</h3>
+      <div v-if="gameStore.leaderboard.length > 0" class="lobbies-table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nom</th>
+              <th>Score</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(entry, index) in gameStore.leaderboard" :key="entry.id">
+              <td>{{ index + 1 }}</td>
+              <td>{{ entry.name }}</td>
+              <td>{{ entry.score }}</td>
+              <td>{{ new Date(entry.date).toLocaleDateString() }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div v-else class="no-lobbies-message">
+        <p>Aucun score enregistré. Soyez le premier à entrer dans la légende !</p>
       </div>
     </div>
   </div>
@@ -206,8 +241,35 @@ th {
   background-color: #0056b3;
 }
 
+.spectate-button {
+  background-color: #6c757d;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.spectate-button:hover {
+  background-color: #5a6268;
+}
+
 .no-lobbies-message {
   padding: 20px;
   color: #777;
+}
+
+.leaderboard {
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.leaderboard td:first-child, .leaderboard th:first-child {
+  font-weight: bold;
+  text-align: center;
 }
 </style>

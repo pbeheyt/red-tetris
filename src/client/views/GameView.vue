@@ -29,9 +29,10 @@ const handleLeaveGame = () => {
 // globale est déjà gérée par App.vue.
 onMounted(() => {
   const { roomName, playerName } = route.params;
+  const isSpectator = route.query.spectate === 'true';
   if (roomName && playerName) {
-    console.log(`Joining game '${roomName}' as '${playerName}'`);
-    gameStore.connectAndJoin(roomName, playerName);
+    console.log(`Joining game '${roomName}' as '${playerName}' (Spectator: ${isSpectator})`);
+    gameStore.connectAndJoin(roomName, playerName, isSpectator);
   }
 });
 
@@ -62,18 +63,28 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
     </div>
 
     <!-- Écran de fin de partie -->
+    <!-- Écran de fin de partie -->
     <div v-if="gameStore.gameStatus === 'finished'" class="game-over-container">
       <h2>Partie terminée !</h2>
       <p class="winner-message">Le gagnant est : <strong>{{ gameStore.gameWinner }}</strong></p>
+      
+      <h3>Scores finaux</h3>
+      <ul class="final-scores">
+        <li v-for="player in gameStore.playerList" :key="player.id">
+          {{ player.name }}: <strong>{{ player.score }} points</strong>
+        </li>
+      </ul>
+
       <button @click="handleLeaveGame" class="leave-button">Retourner au menu</button>
     </div>
 
     <!-- Section Lobby -->
     <div v-if="gameStore.gameStatus === 'lobby'" class="lobby-container">
       <h3>En attente de joueurs...</h3>
-      <ul>
+      <ul class="lobby-player-list">
         <li v-for="player in gameStore.playerList" :key="player.id">
-          {{ player.name }} {{ player.isHost ? '(Hôte)' : '' }}
+          <span>{{ player.name }} {{ player.isHost ? '(Hôte)' : '' }}</span>
+          <span>Score: {{ player.score || 0 }}</span>
         </li>
       </ul>
       <button
@@ -86,7 +97,15 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
       <p v-else>En attente que l'hôte démarre la partie.</p>
     </div>
 
-    <!-- Section Jeu -->
+    <!-- Section Jeu (pour les joueurs) -->
+    <!-- <div v-if="!gameStore.isCurrentUserSpectator">
+      <GameBoard
+        v-if="gameStore.gameStatus === 'playing' || (gameStore.gameStatus === 'finished' && gameStore.currentPlayer)"
+        :board="gameStore.board"
+        :active-piece="gameStore.activePiece"
+        @player-action="handlePlayerAction"
+      />
+    </div> -->
     <template v-if="gameStore.gameStatus === 'playing' || (gameStore.gameStatus === 'finished' && gameStore.currentPlayer)">
       <!-- Multi-board view if more than one player -->
       <MultiBoardGrid
@@ -102,6 +121,31 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
         @player-action="handlePlayerAction"
       />
     </template>
+
+    <!-- Section Spectateur -->
+    <div v-if="gameStore.isCurrentUserSpectator" class="spectator-container">
+      <h2>Mode Spectateur</h2>
+      <p>Vous observez la partie. Voici les participants :</p>
+      <div class="participant-lists">
+        <div class="player-list">
+          <h3>Joueurs</h3>
+          <ul>
+            <li v-for="player in gameStore.playerList" :key="player.id">
+              {{ player.name }} {{ player.isHost ? '(Hôte)' : '' }}
+            </li>
+          </ul>
+        </div>
+        <div class="spectator-list">
+          <h3>Spectateurs</h3>
+          <ul>
+            <li v-for="spectator in gameStore.spectatorList" :key="spectator.id">
+              {{ spectator.name }}
+            </li>
+          </ul>
+        </div>
+      </div>
+      <!-- À l'avenir, on pourrait afficher les plateaux de tous les joueurs ici -->
+    </div>
   </div>
 </template>
 
@@ -189,5 +233,37 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
 
 .start-button:hover {
   background-color: #45a049;
+}
+
+.final-scores {
+  list-style-type: none;
+  padding: 0;
+  margin-bottom: 20px;
+}
+
+.final-scores li {
+  font-size: 1.1em;
+  margin: 5px 0;
+}
+
+.lobby-player-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+}
+
+.spectator-container {
+  border: 2px dashed #007bff;
+  background-color: #e7f3ff;
+  padding: 20px;
+  margin: 20px auto;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.participant-lists {
+  display: flex;
+  justify-content: space-around;
+  text-align: left;
 }
 </style>

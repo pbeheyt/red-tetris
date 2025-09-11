@@ -13,6 +13,8 @@ export const useGameStore = defineStore('game', {
     gameState: null,
     // La liste des lobbies joignables
     lobbies: [],
+    // Le classement des meilleurs scores
+    leaderboard: [],
     // Drapeau pour s'assurer que les écouteurs ne sont enregistrés qu'une fois
     listenersRegistered: false,
   }),
@@ -38,6 +40,13 @@ export const useGameStore = defineStore('game', {
     playerList: (state) => state.gameState?.players || [],
     // Renvoie le nom du gagnant si la partie est terminée
     gameWinner: (state) => state.gameState?.winner || null,
+    // Renvoie la liste des spectateurs
+    spectatorList: (state) => state.gameState?.spectators || [],
+    // Vérifie si l'utilisateur actuel est un spectateur
+    isCurrentUserSpectator: (state) => {
+      if (!state.gameState || !socketState.socketId) return false;
+      return state.gameState.spectators.some(s => s.id === socketState.socketId);
+    },
   },
 
   /**
@@ -60,6 +69,11 @@ export const useGameStore = defineStore('game', {
       // Écouteur pour la mise à jour de la liste des lobbies
       socketService.on('lobbiesListUpdate', (lobbiesList) => {
         this.lobbies = lobbiesList;
+      });
+
+      // Écouteur pour la mise à jour du leaderboard
+      socketService.on('leaderboardUpdate', (leaderboardData) => {
+        this.leaderboard = leaderboardData;
       });
 
       this.listenersRegistered = true;
@@ -85,9 +99,10 @@ export const useGameStore = defineStore('game', {
      * Gère le cas où la connexion n'est pas encore établie en attendant l'événement 'connect'.
      * @param {string} roomName Le nom de la partie à rejoindre.
      * @param {string} playerName Le nom du joueur.
+     * @param {boolean} isSpectator Indique si l'utilisateur rejoint en tant que spectateur.
      */
-    connectAndJoin(roomName, playerName) {
-      const joinPayload = { roomName, playerName };
+    connectAndJoin(roomName, playerName, isSpectator = false) {
+      const joinPayload = { roomName, playerName, isSpectator };
       
       if (socketState.isConnected) {
         console.log('GameStore: Already connected, emitting joinGame.');
@@ -157,6 +172,19 @@ export const useGameStore = defineStore('game', {
      */
     leaveLobbyBrowser() {
       socketService.emit('leaveLobbyBrowser');
+    },
+
+    /**
+     * Demande au serveur d'envoyer les données du leaderboard.
+     */
+    fetchLeaderboard() {
+      if (socketState.isConnected) {
+        socketService.emit('getLeaderboard');
+      } else {
+        socketService.once('connect', () => {
+          socketService.emit('getLeaderboard');
+        });
+      }
     },
   },
 });

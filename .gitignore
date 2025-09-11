@@ -1,3 +1,4 @@
 node_modules
 codebase*.md
 dist/
+leaderboard.db
