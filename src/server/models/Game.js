@@ -28,176 +28,176 @@ import { addScore } from '../services/databaseService.js';
 /**
  * La classe Game ("Machine à Tetris") gère toute la logique d'une partie.
  * Elle est agnostique de la manière dont les données sont transmises (Socket.io, etc.).
- * @param {Object} hostInfo - Objet contenant les infos du premier joueur ({ id, name }).
- * @param {Array<string>} pieceSequence - La séquence de pièces prédéfinie pour la partie.
- * @constructor
  */
-function Game(hostInfo, pieceSequence) {
-  this.players = [new Player(hostInfo.id, hostInfo.name, true)];
-  this.spectators = [];
-  this.pieceSequence = pieceSequence;
-  this.status = 'lobby'; // 'lobby' | 'playing' | 'finished'
-  this.winner = null;
-}
-
-/**
- * Fait avancer le jeu d'une unité de temps (un "tick").
- * @returns {GameState} La "photographie" complète et à jour de l'état du jeu.
- */
-Game.prototype.tick = function() {
-  // La boucle de jeu ne doit agir que si la partie est en cours.
-  if (this.status === 'playing') {
-    // console.log('Game tick');
-    // La future logique de descente des pièces, de complétion des lignes, etc., ira ici.
-  }
-  
-  // On retourne toujours l'état actuel, même si la partie est finie,
-  // pour que tous les clients reçoivent l'état final.
-  return this.getCurrentGameState();
-};
-
-/**
- * Gère une action effectuée par un joueur.
- * @param {string} playerId - L'ID du joueur qui effectue l'action.
- * @param {('moveLeft'|'moveRight'|'rotate'|'softDrop'|'hardDrop')} action - L'action effectuée.
- * @returns {GameState} La "photographie" complète et à jour de l'état du jeu.
- */
-Game.prototype.handlePlayerAction = function(playerId, action) {
-  console.log(`Handling action '${action}' for player ${playerId}`);
-  // La logique de mouvement/rotation des pièces sera implémentée ici.
-  
-  // Pour l'instant, on retourne un état factice.
-  return this.getCurrentGameState();
-};
-
-/**
- * Génère la "photographie" actuelle du jeu.
- * @returns {GameState}
- */
-Game.prototype.getCurrentGameState = function() {
-  // Cette méthode construira l'objet GameState à partir de l'état interne de l'instance Game.
-  // C'est le Contrat n°2.
-  return {
-    status: this.status,
-    winner: this.winner,
-    players: this.players.map(player => ({
-      id: player.id,
-      name: player.name,
-      isHost: player.isHost,
-      hasLost: player.hasLost,
-      score: player.score,
-      board: player.board,
-      activePiece: player.activePiece,
-      nextPieces: [],
-    })),
-    spectators: this.spectators,
-  };
-};
-
-/**
- * Ajoute un nouveau joueur à la partie.
- * @param {Object} playerInfo - Informations sur le joueur ({ id, name }).
- * @returns {boolean} - True si le joueur a été ajouté, false sinon.
- */
-Game.prototype.addPlayer = function(playerInfo) {
-  if (this.status !== 'lobby') {
-    console.log(`Game is already playing. Cannot add player ${playerInfo.name}.`);
-    return false;
-  }
-  const newPlayer = new Player(playerInfo.id, playerInfo.name, false);
-  this.players.push(newPlayer);
-  console.log(`Player ${playerInfo.name} added to the game. Total players: ${this.players.length}`);
-  return true;
-};
-
-/**
- * Ajoute un nouveau spectateur à la partie.
- * @param {Object} spectatorInfo - Informations sur le spectateur ({ id, name }).
- * @returns {boolean} - Toujours true.
- */
-Game.prototype.addSpectator = function(spectatorInfo) {
-  if (!this.spectators.some(s => s.id === spectatorInfo.id)) {
-    this.spectators.push({ id: spectatorInfo.id, name: spectatorInfo.name });
-    console.log(`Spectator ${spectatorInfo.name} added. Total spectators: ${this.spectators.length}`);
-  }
-  return true;
-};
-
-/**
- * Supprime un joueur de la partie et gère la migration de l'hôte si nécessaire.
- * @param {string} playerId - L'ID du joueur à supprimer.
- * @returns {number} Le nombre de joueurs restants.
- */
-Game.prototype.removePlayer = function(playerId) {
-  const playerToRemove = this.players.find(p => p.id === playerId);
-  if (!playerToRemove) return this.players.length;
-
-  const wasHost = playerToRemove.isHost;
-
-  this.players = this.players.filter(p => p.id !== playerId);
-  console.log(`Player ${playerId} removed. Total players: ${this.players.length}`);
-
-  // Si l'hôte est parti et qu'il reste des joueurs, le plus ancien devient le nouvel hôte.
-  if (wasHost && this.players.length > 0) {
-    this.players[0].isHost = true;
-    console.log(`Host migrated to player ${this.players[0].name} (${this.players[0].id}).`);
+class Game {
+  /**
+   * @param {Object} hostInfo - Objet contenant les infos du premier joueur ({ id, name }).
+   * @param {Array<string>} pieceSequence - La séquence de pièces prédéfinie pour la partie.
+   */
+  constructor(hostInfo, pieceSequence) {
+    this.players = [new Player(hostInfo.id, hostInfo.name, true)];
+    this.spectators = [];
+    this.pieceSequence = pieceSequence;
+    this.status = 'lobby'; // 'lobby' | 'playing' | 'finished'
+    this.winner = null;
   }
 
-  // Si la partie était en cours et qu'il ne reste qu'un joueur, ce joueur gagne.
-  if (this.status === 'playing' && this.players.length === 1) {
-    this.status = 'finished';
-    this.winner = this.players[0].name;
-    console.log(`Game in finished state. Winner is ${this.winner}.`);
+  /**
+   * Fait avancer le jeu d'une unité de temps (un "tick").
+   * @returns {GameState} La "photographie" complète et à jour de l'état du jeu.
+   */
+  tick() {
+    // La boucle de jeu ne doit agir que si la partie est en cours.
+    if (this.status === 'playing') {
+      // console.log('Game tick');
+      // La future logique de descente des pièces, de complétion des lignes, etc., ira ici.
+    }
+    
+    // On retourne toujours l'état actuel, même si la partie est finie,
+    // pour que tous les clients reçoivent l'état final.
+    return this.getCurrentGameState();
   }
 
-  return this.players.length;
-};
+  /**
+   * Gère une action effectuée par un joueur.
+   * @param {string} playerId - L'ID du joueur qui effectue l'action.
+   * @param {('moveLeft'|'moveRight'|'rotate'|'softDrop'|'hardDrop')} action - L'action effectuée.
+   * @returns {GameState} La "photographie" complète et à jour de l'état du jeu.
+   */
+  handlePlayerAction(playerId, action) {
+    console.log(`Handling action '${action}' for player ${playerId}`);
+    // La logique de mouvement/rotation des pièces sera implémentée ici.
+    
+    // Pour l'instant, on retourne un état factice.
+    return this.getCurrentGameState();
+  }
 
-/**
- * Supprime un spectateur de la partie.
- * @param {string} spectatorId - L'ID du spectateur à supprimer.
- */
-Game.prototype.removeSpectator = function(spectatorId) {
-  this.spectators = this.spectators.filter(s => s.id !== spectatorId);
-  console.log(`Spectator ${spectatorId} removed. Total spectators: ${this.spectators.length}`);
-};
+  /**
+   * Génère la "photographie" actuelle du jeu.
+   * @returns {GameState}
+   */
+  getCurrentGameState() {
+    // Cette méthode construira l'objet GameState à partir de l'état interne de l'instance Game.
+    // C'est le Contrat n°2.
+    return {
+      status: this.status,
+      winner: this.winner,
+      players: this.players.map(player => ({
+        id: player.id,
+        name: player.name,
+        isHost: player.isHost,
+        hasLost: player.hasLost,
+        score: player.score,
+        board: player.board,
+        activePiece: player.activePiece,
+        nextPieces: [],
+      })),
+      spectators: this.spectators,
+    };
+  }
 
-/**
- * Démarre la partie, changeant son statut de 'lobby' à 'playing'.
- */
-/**
- * Démarre la partie, changeant son statut de 'lobby' à 'playing'.
- */
-Game.prototype.startGame = function() {
-  if (this.status === 'lobby') {
-    this.status = 'playing';
-    console.log('Game has started!');
+  /**
+   * Ajoute un nouveau joueur à la partie.
+   * @param {Object} playerInfo - Informations sur le joueur ({ id, name }).
+   * @returns {boolean} - True si le joueur a été ajouté, false sinon.
+   */
+  addPlayer(playerInfo) {
+    if (this.status !== 'lobby') {
+      console.log(`Game is already playing. Cannot add player ${playerInfo.name}.`);
+      return false;
+    }
+    const newPlayer = new Player(playerInfo.id, playerInfo.name, false);
+    this.players.push(newPlayer);
+    console.log(`Player ${playerInfo.name} added to the game. Total players: ${this.players.length}`);
+    return true;
+  }
 
-    // Logique de fin de partie et de sauvegarde des scores.
-    // Pour l'instant, on simule une fin de partie après 5 secondes.
-    // À l'avenir, la fin de partie sera déclenchée par la logique du jeu (ex: un seul joueur restant).
-    setTimeout(() => {
-      if (this.status !== 'playing') return;
+  /**
+   * Ajoute un nouveau spectateur à la partie.
+   * @param {Object} spectatorInfo - Informations sur le spectateur ({ id, name }).
+   * @returns {boolean} - Toujours true.
+   */
+  addSpectator(spectatorInfo) {
+    if (!this.spectators.some(s => s.id === spectatorInfo.id)) {
+      this.spectators.push({ id: spectatorInfo.id, name: spectatorInfo.name });
+      console.log(`Spectator ${spectatorInfo.name} added. Total spectators: ${this.spectators.length}`);
+    }
+    return true;
+  }
 
-      // Logique de score factice : chaque joueur obtient un score aléatoire.
-      this.players.forEach(player => {
-        player.score = Math.floor(Math.random() * 1000);
-      });
+  /**
+   * Supprime un joueur de la partie et gère la migration de l'hôte si nécessaire.
+   * @param {string} playerId - L'ID du joueur à supprimer.
+   * @returns {number} Le nombre de joueurs restants.
+   */
+  removePlayer(playerId) {
+    const playerToRemove = this.players.find(p => p.id === playerId);
+    if (!playerToRemove) return this.players.length;
 
-      // Trouve le gagnant (celui avec le plus haut score)
-      const winner = this.players.reduce((prev, current) => (prev.score > current.score) ? prev : current, {});
-      this.winner = winner.name || 'Personne';
+    const wasHost = playerToRemove.isHost;
 
+    this.players = this.players.filter(p => p.id !== playerId);
+    console.log(`Player ${playerId} removed. Total players: ${this.players.length}`);
+
+    // Si l'hôte est parti et qu'il reste des joueurs, le plus ancien devient le nouvel hôte.
+    if (wasHost && this.players.length > 0) {
+      this.players[0].isHost = true;
+      console.log(`Host migrated to player ${this.players[0].name} (${this.players[0].id}).`);
+    }
+
+    // Si la partie était en cours et qu'il ne reste qu'un joueur, ce joueur gagne.
+    if (this.status === 'playing' && this.players.length === 1) {
       this.status = 'finished';
-      console.log(`Game finished. Winner: ${this.winner}. Saving scores...`);
+      this.winner = this.players[0].name;
+      console.log(`Game in finished state. Winner is ${this.winner}.`);
+    }
 
-      // Sauvegarde chaque score dans la base de données.
-      this.players.forEach(player => {
-        addScore({ name: player.name, score: player.score });
-      });
-
-    }, 5000);
+    return this.players.length;
   }
-};
+
+  /**
+   * Supprime un spectateur de la partie.
+   * @param {string} spectatorId - L'ID du spectateur à supprimer.
+   */
+  removeSpectator(spectatorId) {
+    this.spectators = this.spectators.filter(s => s.id !== spectatorId);
+    console.log(`Spectator ${spectatorId} removed. Total spectators: ${this.spectators.length}`);
+  }
+
+  /**
+   * Démarre la partie, changeant son statut de 'lobby' à 'playing'.
+   */
+  startGame() {
+    if (this.status === 'lobby') {
+      this.status = 'playing';
+      console.log('Game has started!');
+
+      // Logique de fin de partie et de sauvegarde des scores.
+      // Pour l'instant, on simule une fin de partie après 5 secondes.
+      // À l'avenir, la fin de partie sera déclenchée par la logique du jeu (ex: un seul joueur restant).
+      setTimeout(() => {
+        if (this.status !== 'playing') return;
+
+        // Logique de score factice : chaque joueur obtient un score aléatoire.
+        this.players.forEach(player => {
+          player.score = Math.floor(Math.random() * 1000);
+        });
+
+        // Trouve le gagnant (celui avec le plus haut score)
+        const winner = this.players.reduce((prev, current) => (prev.score > current.score) ? prev : current, {});
+        this.winner = winner.name || 'Personne';
+
+        this.status = 'finished';
+        console.log(`Game finished. Winner: ${this.winner}. Saving scores...`);
+
+        // Sauvegarde chaque score dans la base de données.
+        this.players.forEach(player => {
+          addScore({ name: player.name, score: player.score });
+        });
+
+      }, 5000);
+    }
+  }
+}
 
 export default Game;
