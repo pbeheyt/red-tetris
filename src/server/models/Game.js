@@ -202,7 +202,17 @@ class Game {
             // Assign the new piece to the player
             player.assignNewPiece(newPiece);
 
-            // TODO: Check for game over condition here. If the new piece is not in a valid position, the game is over for this player.
+            // --- Game Over Check ---
+            // If the new piece is immediately invalid, the player has lost.
+            if (!this._isValidPosition(player, newPiece)) {
+              player.hasLost = true;
+              console.log(`Player ${player.name} has lost the game.`);
+
+              const activePlayers = this.players.filter(p => !p.hasLost);
+              if (activePlayers.length <= 1) {
+                this._endGame();
+              }
+            }
           }
           // After a soft drop move, reset the flag. The client must send the action continuously.
           player.isSoftDropping = false;
@@ -213,6 +223,28 @@ class Game {
     // On retourne toujours l'état actuel, même si la partie est finie,
     // pour que tous les clients reçoivent l'état final.
     return this.getCurrentGameState();
+  }
+
+  /**
+   * Ends the game, calculates scores, and sets the winner.
+   */
+  _endGame() {
+    this.status = 'finished';
+
+    const activePlayers = this.players.filter(p => !p.hasLost);
+    if (activePlayers.length === 1) {
+      this.winner = activePlayers[0].name;
+    } else {
+      this.winner = 'Personne'; // No winner in case of a draw
+    }
+
+    console.log(`Game finished. Winner: ${this.winner}. Saving scores...`);
+
+    // Use the placeholder scoring logic to assign scores and save them
+    this.players.forEach(player => {
+      player.score = Math.floor(Math.random() * 1000);
+      addScore({ name: player.name, score: player.score });
+    });
   }
 
   /**
