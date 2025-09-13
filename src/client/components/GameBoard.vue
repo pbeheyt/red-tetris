@@ -6,6 +6,7 @@ import {
   CELL_EMPTY,
   TETROMINO_COLORS,
   ID_TO_TETROMINO,
+  TETROMINO_IDS,
 } from '../../shared/constants.js';
 
 // Contrat n°3 : "Câbles d'Entrée" (Props)
@@ -81,8 +82,8 @@ const mergedGrid = computed(() => {
   const piece = props.activePiece;
   if (!piece || !piece.shape || !piece.position) return base;
 
-  const pieceKey = (piece.kind || piece.type || piece.id);
-  const letter = typeof pieceKey === 'number' ? (ID_TO_TETROMINO[pieceKey] || 'T') : (pieceKey || 'T');
+  const pieceId = TETROMINO_IDS[piece.type];
+  if (!pieceId) return base;
 
   for (let py = 0; py < piece.shape.length; py++) {
     for (let px = 0; px < piece.shape[py].length; px++) {
@@ -91,7 +92,7 @@ const mergedGrid = computed(() => {
       const gx = (piece.position.x || 0) + px;
       const gy = (piece.position.y || 0) + py;
       if (gy >= 0 && gy < rows.value && gx >= 0 && gx < cols.value) {
-        base[gy][gx] = letter; // Marque avec la lettre du Tetrimino actif
+        base[gy][gx] = pieceId; // Mark with the tetromino ID
       }
     }
   }
