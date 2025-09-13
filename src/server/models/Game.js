@@ -1,7 +1,7 @@
 import Player from './Player.js';
 import Piece from './Piece.js';
 import { addScore } from '../services/databaseService.js';
-import { TETROMINO_IDS, BOARD_WIDTH } from '../../shared/constants.js';
+import { TETROMINO_IDS, BOARD_WIDTH, BOARD_HEIGHT } from '../../shared/constants.js';
 
 /**
  * @typedef {Object} GameState
@@ -76,6 +76,42 @@ class Game {
   }
 
   /**
+   * Checks if a piece's position and shape are valid on a given board.
+   * @param {Player} player - The player whose board we are checking against.
+   * @param {Piece} piece - The piece object to validate.
+   * @returns {boolean} - True if the position is valid, false otherwise.
+   */
+  _isValidPosition(player, piece) {
+    const { shape, position } = piece;
+    for (let y = 0; y < shape.length; y++) {
+      for (let x = 0; x < shape[y].length; x++) {
+        // If it's an empty part of the piece's shape, skip it
+        if (shape[y][x] === 0) {
+          continue;
+        }
+
+        const boardX = position.x + x;
+        const boardY = position.y + y;
+
+        // 1. Check if it's outside the board's horizontal bounds
+        if (boardX < 0 || boardX >= BOARD_WIDTH) {
+          return false;
+        }
+        // 2. Check if it's outside the board's vertical bounds (below the floor)
+        if (boardY >= BOARD_HEIGHT) {
+          return false;
+        }
+        // 3. Check if it's colliding with an existing piece on the board
+        // (We only need to check if boardY is non-negative)
+        if (boardY >= 0 && player.board[boardY][boardX] !== 0) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
    * Fait avancer le jeu d'une unité de temps (un "tick").
    * @returns {GameState} La "photographie" complète et à jour de l'état du jeu.
    */
@@ -98,10 +134,37 @@ class Game {
    * @returns {GameState} La "photographie" complète et à jour de l'état du jeu.
    */
   handlePlayerAction(playerId, action) {
-    console.log(`Handling action '${action}' for player ${playerId}`);
-    // La logique de mouvement/rotation des pièces sera implémentée ici.
+    const player = this.players.find(p => p.id === playerId);
+    if (!player || !player.activePiece) {
+      return this.getCurrentGameState();
+    }
 
-    // Pour l'instant, on retourne un état factice.
+    const { activePiece } = player;
+    const testPiece = new Piece(activePiece.type);
+    testPiece.shape = activePiece.shape; // Keep current rotation
+    testPiece.position = { ...activePiece.position };
+
+    switch (action) {
+      case 'moveLeft':
+        testPiece.position.x -= 1;
+        break;
+      case 'moveRight':
+        testPiece.position.x += 1;
+        break;
+      // case 'rotate':
+      //   // Rotation logic will go here
+      //   break;
+      // case 'softDrop':
+      //   testPiece.position.y += 1;
+      //   break;
+    }
+
+    if (this._isValidPosition(player, testPiece)) {
+      // If the new position is valid, update the actual active piece
+      player.activePiece.position = testPiece.position;
+      player.activePiece.shape = testPiece.shape;
+    }
+
     return this.getCurrentGameState();
   }
 
@@ -219,27 +282,27 @@ class Game {
       // La logique de fin de partie et de sauvegarde des scores.
       // Pour l'instant, on simule une fin de partie après 5 secondes.
       // À l'avenir, la fin de partie sera déclenchée par la logique du jeu (ex: un seul joueur restant).
-      setTimeout(() => {
-        if (this.status !== 'playing') return;
+    //   setTimeout(() => {
+    //     if (this.status !== 'playing') return;
 
-        // Logique de score factice : chaque joueur obtient un score aléatoire.
-        this.players.forEach(player => {
-          player.score = Math.floor(Math.random() * 1000);
-        });
+    //     // Logique de score factice : chaque joueur obtient un score aléatoire.
+    //     this.players.forEach(player => {
+    //       player.score = Math.floor(Math.random() * 1000);
+    //     });
 
-        // Trouve le gagnant (celui avec le plus haut score)
-        const winner = this.players.reduce((prev, current) => (prev.score > current.score) ? prev : current, {});
-        this.winner = winner.name || 'Personne';
+    //     // Trouve le gagnant (celui avec le plus haut score)
+    //     const winner = this.players.reduce((prev, current) => (prev.score > current.score) ? prev : current, {});
+    //     this.winner = winner.name || 'Personne';
 
-        this.status = 'finished';
-        console.log(`Game finished. Winner: ${this.winner}. Saving scores...`);
+    //     this.status = 'finished';
+    //     console.log(`Game finished. Winner: ${this.winner}. Saving scores...`);
 
-        // Sauvegarde chaque score dans la base de données.
-        this.players.forEach(player => {
-          addScore({ name: player.name, score: player.score });
-        });
+    //     // Sauvegarde chaque score dans la base de données.
+    //     this.players.forEach(player => {
+    //       addScore({ name: player.name, score: player.score });
+    //     });
 
-      }, 5000);
+    //   }, 5000);
     }
   }
 }
