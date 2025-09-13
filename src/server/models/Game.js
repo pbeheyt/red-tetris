@@ -152,8 +152,12 @@ class Game {
         }
 
         // Check if it's time for the piece to fall
-        if (now - player.lastFallTime >= PIECE_FALL_RATE_MS) {
-          player.lastFallTime = now;
+        const isTimeToFall = now - player.lastFallTime >= PIECE_FALL_RATE_MS;
+
+        if (player.isSoftDropping || isTimeToFall) {
+          if (isTimeToFall) {
+            player.lastFallTime = now;
+          }
 
           const piece = player.activePiece;
           const testPiece = new Piece(piece.type);
@@ -180,6 +184,8 @@ class Game {
 
             // TODO: Check for game over condition here. If the new piece is not in a valid position, the game is over for this player.
           }
+          // After a soft drop move, reset the flag. The client must send the action continuously.
+          player.isSoftDropping = false;
         }
       });
     }
@@ -213,6 +219,32 @@ class Game {
       case 'moveRight':
         testPiece.position.x += 1;
         break;
+      case 'softDrop':
+        // The actual movement is handled in the tick, we just set the flag here.
+        player.isSoftDropping = true;
+        // We can return early as the tick will handle the movement.
+        return this.getCurrentGameState();
+      case 'hardDrop':
+        // Find the lowest valid position by checking downwards
+        while (this._isValidPosition(player, testPiece)) {
+          testPiece.position.y++;
+        }
+        // Once the loop finds an invalid position, step back one
+        testPiece.position.y--;
+
+        // Directly update the player's piece position
+        player.activePiece.position = testPiece.position;
+
+        // Lock the piece and get a new one immediately
+        this._lockPiece(player);
+        const nextPieceType = this._getPieceTypeForPlayer(player);
+        const newPiece = new Piece(nextPieceType);
+        newPiece.position.x = Math.floor(BOARD_WIDTH / 2) - Math.floor(newPiece.shape[0].length / 2);
+        player.assignNewPiece(newPiece);
+
+        // Since the state is immediately and drastically changed, we can return early
+        // The regular validation path isn't needed for hard drop.
+        return this.getCurrentGameState();
       // case 'rotate':
       //   // Rotation logic will go here
       //   break;
