@@ -239,13 +239,43 @@ class Game {
       case 'moveRight':
         testPiece.position.x += 1;
         break;
-      case 'rotate':
+      case 'rotate': {
         // The 'O' piece does not rotate.
         if (activePiece.type === 'O') {
           return this.getCurrentGameState();
         }
-        testPiece.shape = this._rotateShape(activePiece.shape);
-        break;
+
+        const rotatedShape = this._rotateShape(activePiece.shape);
+
+        // --- Wall Kick Logic ---
+        // Test potential positions: 1. default, 2. kick left, 3. kick right ...
+        const kickOffsets = [
+          [0, 0],  // Default position
+          [-1, 0], // Kick one unit to the left
+          [1, 0],  // Kick one unit to the right
+          [-2, 0], // Kick two units to the left
+          [2, 0], // Kick two units to the right
+        ];
+
+        for (const [dx, dy] of kickOffsets) {
+          const tempPiece = new Piece(activePiece.type);
+          tempPiece.shape = rotatedShape;
+          tempPiece.position = {
+            x: activePiece.position.x + dx,
+            y: activePiece.position.y + dy,
+          };
+
+          if (this._isValidPosition(player, tempPiece)) {
+            // Found a valid position, apply rotation and kick
+            player.activePiece.shape = tempPiece.shape;
+            player.activePiece.position = tempPiece.position;
+            return this.getCurrentGameState(); // Success, exit handler
+          }
+        }
+
+        // If no valid position was found after all kick attempts, do nothing.
+        return this.getCurrentGameState();
+      }
       case 'softDrop':
         // The actual movement is handled in the tick, we just set the flag here.
         player.isSoftDropping = true;
