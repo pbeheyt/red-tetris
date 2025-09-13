@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, ref, onBeforeUnmount } from 'vue';
+import { onMounted, onUnmounted, ref, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useGameStore } from '../stores/gameStore';
 import { state as socketState } from '../services/socketService.js';
@@ -23,6 +23,23 @@ const handleLeaveGame = () => {
   router.push('/menu');
 };
 
+// --- Auto-start logic for solo games ---
+let stopWatchingHost = null;
+if (route.query.solo === 'true') {
+  // Watch for the player to become the host, then start the game automatically.
+  stopWatchingHost = watch(
+    () => gameStore.isCurrentUserHost,
+    (isHost) => {
+      if (isHost) {
+        console.log('Auto-starting solo game...');
+        gameStore.sendStartGame();
+        if (stopWatchingHost) stopWatchingHost(); // Stop watching once the job is done.
+      }
+    }
+  );
+}
+// -----------------------------------------
+
 // onMounted s'exécute une seule fois lorsque le composant est monté.
 // C'est le moment idéal pour rejoindre la partie, car la connexion
 // globale est déjà gérée par App.vue.
@@ -37,6 +54,10 @@ onMounted(() => {
 
 onUnmounted(() => {
   gameStore.leaveGame();
+  // Clean up the watcher if it was created
+  if (stopWatchingHost) {
+    stopWatchingHost();
+  }
 });
 
 // Responsive width tracking for MultiBoardGrid (to avoid horizontal scrolling)

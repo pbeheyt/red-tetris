@@ -27,7 +27,7 @@ onUnmounted(() => {
 
 const startSoloGame = () => {
   const roomName = `solo-${Date.now()}`;
-  router.push(`/${roomName}/${userStore.playerName}`);
+  router.push(`/${roomName}/${userStore.playerName}?solo=true`);
 };
 
 const createMultiplayerGame = () => {
@@ -61,7 +61,7 @@ const handleChangeName = () => {
         <button @click="handleChangeName" class="change-name-button">Changer de nom</button>
       </div>
       <button @click="startSoloGame" class="menu-button solo">Mode Solo</button>
-      
+
       <form @submit.prevent="createMultiplayerGame" class="create-game-form">
         <input
           v-model="newRoomName"
