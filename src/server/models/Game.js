@@ -117,6 +117,26 @@ class Game {
   }
 
   /**
+   * Rotates a piece's shape matrix clockwise.
+   * @param {Array<Array<number>>} shape - The shape matrix to rotate.
+   * @returns {Array<Array<number>>} The new, rotated shape matrix.
+   */
+  _rotateShape(shape) {
+    const size = shape.length;
+    const newShape = Array(size).fill(0).map(() => Array(size).fill(0));
+
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        // The formula for a 90-degree clockwise rotation is:
+        // newX = size - 1 - y
+        // newY = x
+        newShape[x][size - 1 - y] = shape[y][x];
+      }
+    }
+    return newShape;
+  }
+
+  /**
    * Locks a player's active piece onto their board.
    * @param {Player} player - The player whose piece is to be locked.
    */
@@ -218,6 +238,9 @@ class Game {
         break;
       case 'moveRight':
         testPiece.position.x += 1;
+        break;
+      case 'rotate':
+        testPiece.shape = this._rotateShape(activePiece.shape);
         break;
       case 'softDrop':
         // The actual movement is handled in the tick, we just set the flag here.
