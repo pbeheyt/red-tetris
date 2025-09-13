@@ -156,6 +156,35 @@ class Game {
         }
       }
     }
+    this._clearLines(player);
+  }
+
+  /**
+   * Checks for and clears any completed lines on a player's board.
+   * @param {Player} player - The player whose board to check.
+   */
+  _clearLines(player) {
+    let linesCleared = 0;
+    // A new board to build, filtering out completed lines
+    const newBoard = player.board.filter(row => {
+      // If a row includes a 0, it's not full, so we keep it.
+      return row.includes(0);
+    });
+
+    linesCleared = BOARD_HEIGHT - newBoard.length;
+
+    if (linesCleared > 0) {
+      console.log(`Player ${player.name} cleared ${linesCleared} lines.`);
+      // Add new empty rows at the top of the board for each line cleared
+      for (let i = 0; i < linesCleared; i++) {
+        newBoard.unshift(Array(BOARD_WIDTH).fill(0));
+      }
+      // Replace the old board with the new one
+      player.board = newBoard;
+
+      // TODO: Add score based on lines cleared.
+      // TODO: Send penalty lines to opponents.
+    }
   }
 
   /**
