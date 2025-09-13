@@ -5,7 +5,6 @@ import { useGameStore } from '../stores/gameStore';
 import { state as socketState } from '../services/socketService.js';
 import GameBoard from '../components/GameBoard.vue';
 import MultiBoardGrid from '../components/MultiBoardGrid.vue';
-import { DEMO_BOARD, DEMO_ACTIVE_PIECE } from '../../shared/demoBoards.js';
 
 const gameStore = useGameStore();
 const route = useRoute();
@@ -67,7 +66,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
     <div v-if="gameStore.gameStatus === 'finished'" class="game-over-container">
       <h2>Partie terminée !</h2>
       <p class="winner-message">Le gagnant est : <strong>{{ gameStore.gameWinner }}</strong></p>
-      
+
       <h3>Scores finaux</h3>
       <ul class="final-scores">
         <li v-for="player in gameStore.playerList" :key="player.id">
@@ -116,8 +115,8 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
       <!-- Single board fallback -->
       <GameBoard
         v-else
-        :board="DEMO_BOARD"
-        :active-piece="DEMO_ACTIVE_PIECE"
+        :board="gameStore.board"
+        :active-piece="gameStore.activePiece"
         @player-action="handlePlayerAction"
       />
     </template>
