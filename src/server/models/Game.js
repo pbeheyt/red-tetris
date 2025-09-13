@@ -112,14 +112,65 @@ class Game {
   }
 
   /**
+   * Locks a player's active piece onto their board.
+   * @param {Player} player - The player whose piece is to be locked.
+   */
+  _lockPiece(player) {
+    const { shape, position } = player.activePiece;
+    const pieceId = TETROMINO_IDS[player.activePiece.type];
+
+    for (let y = 0; y < shape.length; y++) {
+      for (let x = 0; x < shape[y].length; x++) {
+        if (shape[y][x] !== 0) {
+          const boardX = position.x + x;
+          const boardY = position.y + y;
+          // Ensure we don't try to lock parts of the piece that are off-screen
+          if (boardY >= 0 && boardY < BOARD_HEIGHT) {
+            player.board[boardY][boardX] = pieceId;
+          }
+        }
+      }
+    }
+  }
+
+  /**
    * Fait avancer le jeu d'une unité de temps (un "tick").
    * @returns {GameState} La "photographie" complète et à jour de l'état du jeu.
    */
   tick() {
     // La boucle de jeu ne doit agir que si la partie est en cours.
     if (this.status === 'playing') {
-      // console.log('Game tick');
-      // La future logique de descente des pièces, de complétion des lignes, etc., ira ici.
+      this.players.forEach(player => {
+        if (player.hasLost || !player.activePiece) {
+          return; // Skip players who have lost or have no piece
+        }
+
+        const piece = player.activePiece;
+        const testPiece = new Piece(piece.type);
+        testPiece.shape = piece.shape;
+        testPiece.position = { ...piece.position };
+        testPiece.position.y += 1; // Move down by one step
+
+        if (this._isValidPosition(player, testPiece)) {
+          // If the new position is valid, update the piece's position.
+          player.activePiece.position.y += 1;
+        } else {
+          // If not valid, the piece has landed.
+          this._lockPiece(player);
+
+          // Get the next piece from the master sequence for the player
+          const nextPieceType = this._getPieceTypeForPlayer(player);
+          const newPiece = new Piece(nextPieceType);
+
+          // Center the new piece horizontally
+          newPiece.position.x = Math.floor(BOARD_WIDTH / 2) - Math.floor(newPiece.shape[0].length / 2);
+
+          // Assign the new piece to the player
+          player.assignNewPiece(newPiece);
+
+          // TODO: Check for game over condition here. If the new piece is not in a valid position, the game is over for this player.
+        }
+      });
     }
 
     // On retourne toujours l'état actuel, même si la partie est finie,

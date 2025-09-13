@@ -4,7 +4,7 @@
 export const BOARD_WIDTH = 10; // Nombre de colonnes
 export const BOARD_HEIGHT = 20; // Nombre de lignes
 
-export const GAME_TICK_MS = 1000; // Vitesse de la boucle de jeu en millisecondes
+export const GAME_TICK_MS = 100; // Vitesse de la boucle de jeu en millisecondes
 
 // Représentation d'une cellule vide
 export const CELL_EMPTY = 0;

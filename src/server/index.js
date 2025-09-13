@@ -31,7 +31,7 @@ const broadcastLobbies = (io) => {
       hostName: game.players[0].name,
       playerCount: game.players.length,
     }));
-  
+
   io.to(LOBBY_ROOM).emit('lobbiesListUpdate', joinableLobbies);
   loginfo('Broadcasted lobbies list to clients in menu.');
 };
@@ -108,6 +108,12 @@ const initEngine = (io) => {
       const roomName = socket.data.roomName;
       const game = activeGames[roomName];
       if (game && game.players[0].id === socket.id) { // Vérifie si le joueur est l'hôte
+        // Prevent the game from being started multiple times
+        if (game.status !== 'lobby' || gameIntervals[roomName]) {
+          loginfo(`Attempted to start an already running game in room '${roomName}'. Ignoring.`);
+          return;
+        }
+
         loginfo(`Host ${socket.id} is starting the game in room '${roomName}'`);
         game.startGame();
 
