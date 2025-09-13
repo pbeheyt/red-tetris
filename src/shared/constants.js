@@ -4,7 +4,8 @@
 export const BOARD_WIDTH = 10; // Nombre de colonnes
 export const BOARD_HEIGHT = 20; // Nombre de lignes
 
-export const GAME_TICK_MS = 1000; // Vitesse de la boucle de jeu en millisecondes
+export const SERVER_TICK_RATE_MS = 50; // Server update rate (20 FPS)
+export const PIECE_FALL_RATE_MS = 1000; // Time it takes for a piece to fall one step
 
 // Représentation d'une cellule vide
 export const CELL_EMPTY = 0;

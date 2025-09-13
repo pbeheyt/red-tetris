@@ -24,6 +24,8 @@ class Player {
     this.board = createEmptyBoard(); // Le plateau est maintenant initialisé.
     this.activePiece = null; // La pièce actuellement contrôlée par le joueur.
     this.pieceIndex = 0; // Tracks the player's position in the master piece sequence.
+    this.lastFallTime = 0; // Timestamp of the last time the piece fell naturally.
+    this.isSoftDropping = false; // True if the player is holding the soft drop key.
     this.hasLost = false;
     this.score = 0;
   }
