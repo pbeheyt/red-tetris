@@ -23,8 +23,17 @@ class Player {
     this.isHost = isHost;
     this.board = createEmptyBoard(); // Le plateau est maintenant initialisé.
     this.activePiece = null; // La pièce actuellement contrôlée par le joueur.
+    this.pieceIndex = 0; // Tracks the player's position in the master piece sequence.
     this.hasLost = false;
     this.score = 0;
+  }
+
+  /**
+   * Assigns a new piece to the player.
+   * @param {Piece} piece - The new piece object to be controlled by the player.
+   */
+  assignNewPiece(piece) {
+    this.activePiece = piece;
   }
 }
 

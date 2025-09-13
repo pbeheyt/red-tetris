@@ -1,6 +1,7 @@
 import Player from './Player.js';
 import Piece from './Piece.js';
 import { addScore } from '../services/databaseService.js';
+import { TETROMINO_IDS, BOARD_WIDTH } from '../../shared/constants.js';
 
 /**
  * @typedef {Object} GameState
@@ -32,14 +33,46 @@ import { addScore } from '../services/databaseService.js';
 class Game {
   /**
    * @param {Object} hostInfo - Objet contenant les infos du premier joueur ({ id, name }).
-   * @param {Array<string>} pieceSequence - La séquence de pièces prédéfinie pour la partie.
    */
-  constructor(hostInfo, pieceSequence) {
+  constructor(hostInfo) {
     this.players = [new Player(hostInfo.id, hostInfo.name, true)];
     this.spectators = [];
-    this.pieceSequence = pieceSequence;
+    this.masterPieceSequence = [];
+    this._generateNewBag();
     this.status = 'lobby'; // 'lobby' | 'playing' | 'finished'
     this.winner = null;
+  }
+
+  /**
+   * Generates a new "bag" of 7 unique tetrominoes and adds it to the master sequence.
+   */
+  _generateNewBag() {
+    const pieceTypes = Object.keys(TETROMINO_IDS);
+
+    // Fisher-Yates shuffle algorithm
+    for (let i = pieceTypes.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pieceTypes[i], pieceTypes[j]] = [pieceTypes[j], pieceTypes[i]];
+    }
+
+    this.masterPieceSequence.push(...pieceTypes);
+  }
+
+  /**
+   * Gets the next piece type for a specific player from the master sequence.
+   * @param {Player} player - The player for whom to get the next piece.
+   * @returns {string} The type of the next piece (e.g., 'T', 'L').
+   */
+  _getPieceTypeForPlayer(player) {
+    // If the player is about to need a piece that doesn't exist yet, generate a new bag.
+    if (player.pieceIndex >= this.masterPieceSequence.length) {
+      this._generateNewBag();
+      console.log('Master piece sequence extended. New length:', this.masterPieceSequence.length);
+    }
+
+    const pieceType = this.masterPieceSequence[player.pieceIndex];
+    player.pieceIndex++; // Crucially, advance the index for this player
+    return pieceType;
   }
 
   /**
@@ -52,7 +85,7 @@ class Game {
       // console.log('Game tick');
       // La future logique de descente des pièces, de complétion des lignes, etc., ira ici.
     }
-    
+
     // On retourne toujours l'état actuel, même si la partie est finie,
     // pour que tous les clients reçoivent l'état final.
     return this.getCurrentGameState();
@@ -67,7 +100,7 @@ class Game {
   handlePlayerAction(playerId, action) {
     console.log(`Handling action '${action}' for player ${playerId}`);
     // La logique de mouvement/rotation des pièces sera implémentée ici.
-    
+
     // Pour l'instant, on retourne un état factice.
     return this.getCurrentGameState();
   }
@@ -172,7 +205,18 @@ class Game {
       this.status = 'playing';
       console.log('Game has started!');
 
-      // Logique de fin de partie et de sauvegarde des scores.
+      // Assign the first piece to every player
+      this.players.forEach(player => {
+        const pieceType = this._getPieceTypeForPlayer(player);
+        const newPiece = new Piece(pieceType);
+
+        // Center the piece horizontally on the board
+        newPiece.position.x = Math.floor(BOARD_WIDTH / 2) - Math.floor(newPiece.shape[0].length / 2);
+
+        player.assignNewPiece(newPiece);
+      });
+
+      // La logique de fin de partie et de sauvegarde des scores.
       // Pour l'instant, on simule une fin de partie après 5 secondes.
       // À l'avenir, la fin de partie sera déclenchée par la logique du jeu (ex: un seul joueur restant).
       setTimeout(() => {
