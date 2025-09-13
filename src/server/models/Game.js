@@ -1,7 +1,12 @@
 import Player from './Player.js';
 import Piece from './Piece.js';
 import { addScore } from '../services/databaseService.js';
-import { TETROMINO_IDS, BOARD_WIDTH, BOARD_HEIGHT } from '../../shared/constants.js';
+import {
+  TETROMINO_IDS,
+  BOARD_WIDTH,
+  BOARD_HEIGHT,
+  PIECE_FALL_RATE_MS
+} from '../../shared/constants.js';
 
 /**
  * @typedef {Object} GameState
@@ -138,6 +143,7 @@ class Game {
    * @returns {GameState} La "photographie" complète et à jour de l'état du jeu.
    */
   tick() {
+    const now = Date.now();
     // La boucle de jeu ne doit agir que si la partie est en cours.
     if (this.status === 'playing') {
       this.players.forEach(player => {
@@ -145,30 +151,35 @@ class Game {
           return; // Skip players who have lost or have no piece
         }
 
-        const piece = player.activePiece;
-        const testPiece = new Piece(piece.type);
-        testPiece.shape = piece.shape;
-        testPiece.position = { ...piece.position };
-        testPiece.position.y += 1; // Move down by one step
+        // Check if it's time for the piece to fall
+        if (now - player.lastFallTime >= PIECE_FALL_RATE_MS) {
+          player.lastFallTime = now;
 
-        if (this._isValidPosition(player, testPiece)) {
-          // If the new position is valid, update the piece's position.
-          player.activePiece.position.y += 1;
-        } else {
-          // If not valid, the piece has landed.
-          this._lockPiece(player);
+          const piece = player.activePiece;
+          const testPiece = new Piece(piece.type);
+          testPiece.shape = piece.shape;
+          testPiece.position = { ...piece.position };
+          testPiece.position.y += 1; // Move down by one step
 
-          // Get the next piece from the master sequence for the player
-          const nextPieceType = this._getPieceTypeForPlayer(player);
-          const newPiece = new Piece(nextPieceType);
+          if (this._isValidPosition(player, testPiece)) {
+            // If the new position is valid, update the piece's position.
+            player.activePiece.position.y += 1;
+          } else {
+            // If not valid, the piece has landed.
+            this._lockPiece(player);
 
-          // Center the new piece horizontally
-          newPiece.position.x = Math.floor(BOARD_WIDTH / 2) - Math.floor(newPiece.shape[0].length / 2);
+            // Get the next piece from the master sequence for the player
+            const nextPieceType = this._getPieceTypeForPlayer(player);
+            const newPiece = new Piece(nextPieceType);
 
-          // Assign the new piece to the player
-          player.assignNewPiece(newPiece);
+            // Center the new piece horizontally
+            newPiece.position.x = Math.floor(BOARD_WIDTH / 2) - Math.floor(newPiece.shape[0].length / 2);
 
-          // TODO: Check for game over condition here. If the new piece is not in a valid position, the game is over for this player.
+            // Assign the new piece to the player
+            player.assignNewPiece(newPiece);
+
+            // TODO: Check for game over condition here. If the new piece is not in a valid position, the game is over for this player.
+          }
         }
       });
     }

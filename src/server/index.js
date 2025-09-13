@@ -2,7 +2,7 @@ import http from 'http'
 import express from 'express'
 import { Server } from 'socket.io'
 import Game from './models/Game.js'
-import { GAME_TICK_MS } from '../shared/constants.js'
+import { SERVER_TICK_RATE_MS } from '../shared/constants.js'
 import debug from 'debug'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -129,7 +129,7 @@ const initEngine = (io) => {
             // On ne supprime pas la partie ici, on la laisse pour consultation
             // jusqu'à ce que tous les joueurs partent.
           }
-        }, GAME_TICK_MS);
+        }, SERVER_TICK_RATE_MS);
         gameIntervals[roomName] = intervalId;
 
         io.to(roomName).emit('gameStateUpdate', game.getCurrentGameState());
