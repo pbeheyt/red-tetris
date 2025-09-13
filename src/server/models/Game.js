@@ -240,6 +240,10 @@ class Game {
         testPiece.position.x += 1;
         break;
       case 'rotate':
+        // The 'O' piece does not rotate.
+        if (activePiece.type === 'O') {
+          return this.getCurrentGameState();
+        }
         testPiece.shape = this._rotateShape(activePiece.shape);
         break;
       case 'softDrop':
