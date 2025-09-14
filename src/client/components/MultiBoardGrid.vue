@@ -50,7 +50,7 @@ const cols = computed(() => {
 }
 .player-name {
   margin-bottom: 8px;
-  color: #ddd;
+  color: black;
   font-size: 1em;
   font-weight: bold;
   text-align: center;
