@@ -316,6 +316,27 @@ class Game {
   }
 
   /**
+   * Calculates the spectrum of a player's board.
+   * The spectrum is an array of the heights of each column.
+   * @param {Player} player - The player whose board to analyze.
+   * @returns {number[]} An array of 10 numbers representing column heights.
+   */
+  _calculateSpectrum(player) {
+    const spectrum = Array(BOARD_WIDTH).fill(0);
+    const { board } = player;
+
+    for (let x = 0; x < BOARD_WIDTH; x++) {
+      for (let y = 0; y < BOARD_HEIGHT; y++) {
+        if (board[y][x] !== 0) {
+          spectrum[x] = BOARD_HEIGHT - y;
+          break; // Move to the next column once the top block is found
+        }
+      }
+    }
+    return spectrum;
+  }
+
+  /**
    * Gère une action effectuée par un joueur.
    * @param {string} playerId - L'ID du joueur qui effectue l'action.
    * @param {('moveLeft'|'moveRight'|'rotate'|'softDrop'|'hardDrop')} action - L'action effectuée.
@@ -437,6 +458,7 @@ class Game {
         score: player.score,
         board: player.board,
         activePiece: player.activePiece,
+        spectrum: this._calculateSpectrum(player),
         nextPieces: [],
       })),
       spectators: this.spectators,
