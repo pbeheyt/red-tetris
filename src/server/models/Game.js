@@ -5,7 +5,8 @@ import {
   TETROMINO_IDS,
   BOARD_WIDTH,
   BOARD_HEIGHT,
-  PIECE_FALL_RATE_MS
+  PIECE_FALL_RATE_MS,
+  PENALTY_CELL
 } from '../../shared/constants.js';
 
 /**
@@ -167,8 +168,9 @@ class Game {
     let linesCleared = 0;
     // A new board to build, filtering out completed lines
     const newBoard = player.board.filter(row => {
-      // If a row includes a 0, it's not full, so we keep it.
-      return row.includes(0);
+      // A line is kept if it has an empty cell OR if it's a penalty line.
+      // A line is only cleared if it's full of tetromino pieces (no 0s) and not a penalty line.
+      return row.includes(0) || row.includes(PENALTY_CELL);
     });
 
     linesCleared = BOARD_HEIGHT - newBoard.length;
@@ -182,8 +184,43 @@ class Game {
       // Replace the old board with the new one
       player.board = newBoard;
 
+      // Send penalty lines to opponents if more than one line was cleared
+      if (linesCleared > 1) {
+        const penaltyLinesToSend = linesCleared - 1;
+        this.players.forEach(opponent => {
+          if (opponent.id !== player.id && !opponent.hasLost) {
+            this._addPenaltyLines(opponent, penaltyLinesToSend);
+          }
+        });
+      }
+
       // TODO: Add score based on lines cleared.
-      // TODO: Send penalty lines to opponents.
+    }
+  }
+
+  /**
+   * Adds a specified number of penalty lines to a player's board.
+   * @param {Player} player - The player receiving the penalty.
+   * @param {number} lineCount - The number of penalty lines to add.
+   */
+  _addPenaltyLines(player, lineCount) {
+    console.log(`Sending ${lineCount} penalty lines to player ${player.name}`);
+    for (let i = 0; i < lineCount; i++) {
+      // Remove the top line to make space
+      player.board.shift();
+
+      // Create a solid, indestructible penalty line.
+      const penaltyLine = Array(BOARD_WIDTH).fill(PENALTY_CELL);
+
+      // Add the penalty line to the bottom
+      player.board.push(penaltyLine);
+
+      // Crucially, the active piece must also be shifted up to stay in sync with the board.
+      if (player.activePiece) {
+        if (player.activePiece.position.y > 0) {
+          player.activePiece.position.y -= 1;
+        }
+      }
     }
   }
 

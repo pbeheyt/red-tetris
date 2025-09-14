@@ -7,6 +7,8 @@ import {
   TETROMINO_COLORS,
   ID_TO_TETROMINO,
   TETROMINO_IDS,
+  PENALTY_CELL,
+  PENALTY_COLOR
 } from '../../shared/constants.js';
 
 // Contrat n°3 : "Câbles d'Entrée" (Props)
@@ -101,6 +103,7 @@ const mergedGrid = computed(() => {
 
 function resolveCellColor(val) {
   if (!val || val === CELL_EMPTY) return 'transparent';
+  if (val === PENALTY_CELL) return PENALTY_COLOR;
   if (typeof val === 'number') {
     const key = ID_TO_TETROMINO[val];
     return (key && TETROMINO_COLORS[key]) || '#777';

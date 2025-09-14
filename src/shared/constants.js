@@ -9,6 +9,7 @@ export const PIECE_FALL_RATE_MS = 1000; // Time it takes for a piece to fall one
 
 // Représentation d'une cellule vide
 export const CELL_EMPTY = 0;
+export const PENALTY_CELL = -1; // Represents an indestructible penalty block
 
 // Identifiants de Tetriminos partagés (client/serveur)
 export const TETROMINO_IDS = {
@@ -41,6 +42,8 @@ export const TETROMINO_COLORS = {
   J: '#0000FF', // Blue
   L: '#FFA500', // Orange
 };
+
+export const PENALTY_COLOR = '#666666'; // Gray for penalty lines
 
 // Taille minimale d'un carré (pour le rendu responsive)
 export const MIN_TILE_PX = 12;
