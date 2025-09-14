@@ -265,19 +265,21 @@ class Game {
             // Center the new piece horizontally
             newPiece.position.x = Math.floor(BOARD_WIDTH / 2) - Math.floor(newPiece.shape[0].length / 2);
 
-            // Assign the new piece to the player
-            player.assignNewPiece(newPiece);
-
-            // --- Game Over Check ---
-            // If the new piece is immediately invalid, the player has lost.
+            // --- Game Over Check (Pre-spawn validation) ---
+            // If the new piece is invalid *before* being assigned, the player has lost.
             if (!this._isValidPosition(player, newPiece)) {
               player.hasLost = true;
+              // Clear the active piece for the lost player so it doesn't render overlapping.
+              player.activePiece = null;
               console.log(`Player ${player.name} has lost the game.`);
 
               const activePlayers = this.players.filter(p => !p.hasLost);
               if (activePlayers.length <= 1) {
                 this._endGame();
               }
+            } else {
+              // If the position is valid, assign the new piece to the player
+              player.assignNewPiece(newPiece);
             }
           }
           // After a soft drop move, reset the flag. The client must send the action continuously.
