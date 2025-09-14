@@ -306,11 +306,6 @@ class Game {
       this.winner = 'Personne'; // No winner in case of a draw
     }
 
-    // Nullify all remaining active pieces for a clean final board state.
-    this.players.forEach(p => {
-      p.activePiece = null;
-    });
-
     console.log(`Game finished. Winner: ${this.winner}. Saving scores...`);
 
     // Use the placeholder scoring logic to assign scores and save them
