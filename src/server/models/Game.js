@@ -5,7 +5,8 @@ import {
   TETROMINO_IDS,
   BOARD_WIDTH,
   BOARD_HEIGHT,
-  PIECE_FALL_RATE_MS
+  PIECE_FALL_RATE_MS,
+  PENALTY_CELL
 } from '../../shared/constants.js';
 
 /**
@@ -167,8 +168,9 @@ class Game {
     let linesCleared = 0;
     // A new board to build, filtering out completed lines
     const newBoard = player.board.filter(row => {
-      // If a row includes a 0, it's not full, so we keep it.
-      return row.includes(0);
+      // A line is kept if it has an empty cell OR if it's a penalty line.
+      // A line is only cleared if it's full of tetromino pieces (no 0s) and not a penalty line.
+      return row.includes(0) || row.includes(PENALTY_CELL);
     });
 
     linesCleared = BOARD_HEIGHT - newBoard.length;
@@ -182,8 +184,43 @@ class Game {
       // Replace the old board with the new one
       player.board = newBoard;
 
+      // Send penalty lines to opponents if more than one line was cleared
+      if (linesCleared > 1) {
+        const penaltyLinesToSend = linesCleared - 1;
+        this.players.forEach(opponent => {
+          if (opponent.id !== player.id && !opponent.hasLost) {
+            this._addPenaltyLines(opponent, penaltyLinesToSend);
+          }
+        });
+      }
+
       // TODO: Add score based on lines cleared.
-      // TODO: Send penalty lines to opponents.
+    }
+  }
+
+  /**
+   * Adds a specified number of penalty lines to a player's board.
+   * @param {Player} player - The player receiving the penalty.
+   * @param {number} lineCount - The number of penalty lines to add.
+   */
+  _addPenaltyLines(player, lineCount) {
+    console.log(`Sending ${lineCount} penalty lines to player ${player.name}`);
+    for (let i = 0; i < lineCount; i++) {
+      // Remove the top line to make space
+      player.board.shift();
+
+      // Create a solid, indestructible penalty line.
+      const penaltyLine = Array(BOARD_WIDTH).fill(PENALTY_CELL);
+
+      // Add the penalty line to the bottom
+      player.board.push(penaltyLine);
+
+      // Crucially, the active piece must also be shifted up to stay in sync with the board.
+      if (player.activePiece) {
+        if (player.activePiece.position.y > 0) {
+          player.activePiece.position.y -= 1;
+        }
+      }
     }
   }
 
@@ -228,19 +265,21 @@ class Game {
             // Center the new piece horizontally
             newPiece.position.x = Math.floor(BOARD_WIDTH / 2) - Math.floor(newPiece.shape[0].length / 2);
 
-            // Assign the new piece to the player
-            player.assignNewPiece(newPiece);
-
-            // --- Game Over Check ---
-            // If the new piece is immediately invalid, the player has lost.
+            // --- Game Over Check (Pre-spawn validation) ---
+            // If the new piece is invalid *before* being assigned, the player has lost.
             if (!this._isValidPosition(player, newPiece)) {
               player.hasLost = true;
+              // Clear the active piece for the lost player so it doesn't render overlapping.
+              player.activePiece = null;
               console.log(`Player ${player.name} has lost the game.`);
 
               const activePlayers = this.players.filter(p => !p.hasLost);
               if (activePlayers.length <= 1) {
                 this._endGame();
               }
+            } else {
+              // If the position is valid, assign the new piece to the player
+              player.assignNewPiece(newPiece);
             }
           }
           // After a soft drop move, reset the flag. The client must send the action continuously.
@@ -274,6 +313,27 @@ class Game {
       player.score = Math.floor(Math.random() * 1000);
       addScore({ name: player.name, score: player.score });
     });
+  }
+
+  /**
+   * Calculates the spectrum of a player's board.
+   * The spectrum is an array of the heights of each column.
+   * @param {Player} player - The player whose board to analyze.
+   * @returns {number[]} An array of 10 numbers representing column heights.
+   */
+  _calculateSpectrum(player) {
+    const spectrum = Array(BOARD_WIDTH).fill(0);
+    const { board } = player;
+
+    for (let x = 0; x < BOARD_WIDTH; x++) {
+      for (let y = 0; y < BOARD_HEIGHT; y++) {
+        if (board[y][x] !== 0) {
+          spectrum[x] = BOARD_HEIGHT - y;
+          break; // Move to the next column once the top block is found
+        }
+      }
+    }
+    return spectrum;
   }
 
   /**
@@ -398,6 +458,7 @@ class Game {
         score: player.score,
         board: player.board,
         activePiece: player.activePiece,
+        spectrum: this._calculateSpectrum(player),
         nextPieces: [],
       })),
       spectators: this.spectators,

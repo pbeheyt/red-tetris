@@ -1,56 +1,91 @@
 <script setup>
 import { computed } from 'vue';
-import GameBoard from './GameBoard.vue';
-import { BOARD_WIDTH, BOARD_HEIGHT, MIN_TILE_PX, MAX_TILE_PX } from '../../shared/constants.js';
+import { BOARD_WIDTH, BOARD_HEIGHT } from '../../shared/constants.js';
 
 const props = defineProps({
   players: { type: Array, required: true, default: () => [] },
   containerWidth: { type: Number, required: true },
 });
 
-// Compute responsive columns based on number of players (1..4) to avoid horizontal scroll
-// 1 player: 1 col, 2: 2 cols, 3-4: 2 cols
+// Compute responsive columns based on number of players to avoid horizontal scroll
 const cols = computed(() => {
   const n = Math.max(1, Math.min(4, props.players.length));
-  if (n === 1) return 1;
-  if (n === 2) return 2;
-  return 2; // 3 or 4 players in 2 columns
-});
-
-// Tile size calculation: fit all boards within container width without horizontal scroll.
-const tileSize = computed(() => {
-  const boardsPerRow = cols.value;
-  const gaps = (boardsPerRow + 1) * 8; // 8px padding/gap heuristic
-  const usable = Math.max(0, props.containerWidth - gaps);
-  const boardPixelWidth = Math.floor(usable / boardsPerRow);
-  const size = Math.floor(boardPixelWidth / BOARD_WIDTH);
-  return Math.max(MIN_TILE_PX, Math.min(MAX_TILE_PX, size));
+  if (n <= 2) return n;
+  return 2;
 });
 </script>
 
 <template>
-  <div class="grid" :style="{ gridTemplateColumns: `repeat(${cols}, 1fr)` }">
-    <div v-for="p in players" :key="p.id" class="cell">
+  <div class="grid-container" :style="{ gridTemplateColumns: `repeat(${cols}, 1fr)` }">
+    <div v-for="p in players" :key="p.id" class="player-cell">
       <div class="player-name">{{ p.name }}</div>
-      <GameBoard :board="p.board || []" :active-piece="p.activePiece || null" :tile-size="tileSize" />
+      <div class="spectrum-board">
+        <div class="spectrum-grid">
+          <div
+            v-for="(height, index) in p.spectrum"
+            :key="index"
+            class="spectrum-column"
+          >
+            <div
+              class="spectrum-bar"
+              :style="{ height: `${(height / BOARD_HEIGHT) * 100}%` }"
+            ></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.grid {
+.grid-container {
   display: grid;
-  grid-gap: 12px;
+  grid-gap: 20px;
+  justify-items: center;
 }
-.cell {
+.player-cell {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 .player-name {
-  margin-bottom: 6px;
-  color: #ddd;
-  font-size: 14px;
+  margin-bottom: 8px;
+  color: black;
+  font-size: 1em;
+  font-weight: bold;
+  text-align: center;
+}
+
+.spectrum-board {
+  width: 120px;
+  height: 240px;
+  background-color: #1a1a1a;
+  border: 4px solid #555;
+  border-bottom-color: #888;
+  border-right-color: #888;
+  padding: 5px;
+  box-sizing: border-box;
+}
+
+.spectrum-grid {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  width: 100%;
+  gap: 1px;
+}
+
+.spectrum-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column-reverse; /* Bars grow from the bottom */
+  background-color: #000;
+}
+
+.spectrum-bar {
+  width: 100%;
+  background-color: #777;
+  transition: height 0.05s ease-out; /* Smooth transitions for spectrum changes */
 }
 </style>
 

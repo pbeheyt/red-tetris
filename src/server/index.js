@@ -143,8 +143,9 @@ const initEngine = (io) => {
       const game = activeGames[roomName];
       if (game) {
         loginfo(`Action '${action}' from ${socket.id} in room '${roomName}'`);
-        game.handlePlayerAction(socket.id, action);
-        // L'état sera mis à jour et diffusé au prochain tick de la boucle de jeu.
+        const newState = game.handlePlayerAction(socket.id, action);
+        // Immediately broadcast the new state after a player action for responsiveness.
+        io.to(roomName).emit('gameStateUpdate', newState);
       }
     });
 

@@ -118,29 +118,20 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
     </div>
 
     <!-- Section Jeu (pour les joueurs) -->
-    <!-- <div v-if="!gameStore.isCurrentUserSpectator">
+    <div class="game-main-area" v-if="gameStore.gameStatus === 'playing' || (gameStore.gameStatus === 'finished' && gameStore.currentPlayer)">
+      <!-- Main board for the current player -->
       <GameBoard
-        v-if="gameStore.gameStatus === 'playing' || (gameStore.gameStatus === 'finished' && gameStore.currentPlayer)"
         :board="gameStore.board"
         :active-piece="gameStore.activePiece"
         @player-action="handlePlayerAction"
       />
-    </div> -->
-    <template v-if="gameStore.gameStatus === 'playing' || (gameStore.gameStatus === 'finished' && gameStore.currentPlayer)">
-      <!-- Multi-board view if more than one player -->
+      <!-- Spectator boards for multiplayer -->
       <MultiBoardGrid
         v-if="(gameStore.playerList?.length || 0) > 1"
-        :players="gameStore.playerList"
+        :players="gameStore.playerList.filter(p => p.id !== gameStore.currentPlayer.id)"
         :container-width="containerWidth"
       />
-      <!-- Single board fallback -->
-      <GameBoard
-        v-else
-        :board="gameStore.board"
-        :active-piece="gameStore.activePiece"
-        @player-action="handlePlayerAction"
-      />
-    </template>
+    </div>
 
     <!-- Section Spectateur -->
     <div v-if="gameStore.isCurrentUserSpectator" class="spectator-container">
@@ -170,6 +161,13 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
 </template>
 
 <style scoped>
+.game-main-area {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 20px;
+}
+
 .game-header {
   display: flex;
   justify-content: space-between;
