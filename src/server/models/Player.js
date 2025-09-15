@@ -31,6 +31,19 @@ class Player {
   }
 
   /**
+   * Resets a player's state for a new game.
+   */
+  reset() {
+    this.board = createEmptyBoard();
+    this.activePiece = null;
+    this.pieceIndex = 0;
+    this.lastFallTime = 0;
+    this.isSoftDropping = false;
+    this.hasLost = false;
+    this.score = 0;
+  }
+
+  /**
    * Assigns a new piece to the player.
    * @param {Piece} piece - The new piece object to be controlled by the player.
    */

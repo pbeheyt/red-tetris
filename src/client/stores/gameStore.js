@@ -143,6 +143,17 @@ export const useGameStore = defineStore('game', {
     },
 
     /**
+     * Informs the server that the host wants to restart the game.
+     */
+    sendRestartGame() {
+      if (!socketState.isConnected) {
+        console.warn("Cannot restart game: not connected.");
+        return;
+      }
+      socketService.emit('restartGame');
+    },
+
+    /**
      * Informe le serveur que le joueur quitte la partie et nettoie l'état local.
      * La connexion socket reste active.
      */
