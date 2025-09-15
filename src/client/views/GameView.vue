@@ -77,23 +77,25 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
       <div>
         <p>Partie : <strong>{{ route.params.roomName }}</strong></p>
         <p>Joueur : <strong>{{ route.params.playerName }}</strong></p>
+        <p v-if="gameStore.gameMode === 'solo' && gameStore.gameStatus !== 'finished'">Score : <strong>{{ gameStore.currentPlayer?.score || 0 }}</strong></p>
         <p>État : <strong :style="{ color: socketState.isConnected ? 'green' : 'red' }">{{ socketState.isConnected ? 'Connecté' : 'En cours de connexion...' }}</strong></p>
       </div>
       <button @click="handleLeaveGame" class="leave-button">Quitter</button>
     </div>
 
     <!-- Écran de fin de partie -->
-    <!-- Écran de fin de partie -->
     <div v-if="gameStore.gameStatus === 'finished'" class="game-over-container">
       <h2>Partie terminée !</h2>
-      <p class="winner-message">Le gagnant est : <strong>{{ gameStore.gameWinner }}</strong></p>
+      <p class="winner-message" v-if="gameStore.gameMode !== 'solo'">Le gagnant est : <strong>{{ gameStore.gameWinner }}</strong></p>
 
-      <h3>Scores finaux</h3>
-      <ul class="final-scores">
-        <li v-for="player in gameStore.playerList" :key="player.id">
-          {{ player.name }}: <strong>{{ player.score }} points</strong>
-        </li>
-      </ul>
+      <div v-if="gameStore.gameMode === 'solo'">
+        <h3>Scores finaux</h3>
+        <ul class="final-scores">
+          <li v-for="player in gameStore.playerList" :key="player.id">
+            {{ player.name }}: <strong>{{ player.score }} points</strong>
+          </li>
+        </ul>
+      </div>
 
       <button @click="handleLeaveGame" class="leave-button">Retourner au menu</button>
     </div>
@@ -104,7 +106,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
       <ul class="lobby-player-list">
         <li v-for="player in gameStore.playerList" :key="player.id">
           <span>{{ player.name }} {{ player.isHost ? '(Hôte)' : '' }}</span>
-          <span>Score: {{ player.score || 0 }}</span>
+          <span v-if="gameStore.gameMode === 'solo'">Score: {{ player.score || 0 }}</span>
         </li>
       </ul>
       <button

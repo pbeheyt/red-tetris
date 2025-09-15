@@ -6,7 +6,8 @@ import {
   BOARD_WIDTH,
   BOARD_HEIGHT,
   PIECE_FALL_RATE_MS,
-  PENALTY_CELL
+  PENALTY_CELL,
+  SCORES
 } from '../../shared/constants.js';
 
 /**
@@ -39,11 +40,13 @@ import {
 class Game {
   /**
    * @param {Object} hostInfo - Objet contenant les infos du premier joueur ({ id, name }).
+   * @param {('solo'|'multiplayer')} gameMode - The mode of the game.
    */
-  constructor(hostInfo) {
+  constructor(hostInfo, gameMode = 'multiplayer') {
     this.players = [new Player(hostInfo.id, hostInfo.name, true)];
     this.spectators = [];
     this.masterPieceSequence = [];
+    this.gameMode = gameMode;
     this._generateNewBag();
     this.status = 'lobby'; // 'lobby' | 'playing' | 'finished'
     this.winner = null;
@@ -184,6 +187,24 @@ class Game {
       // Replace the old board with the new one
       player.board = newBoard;
 
+      // Add score based on lines cleared
+      if (this.gameMode === 'solo') {
+        switch (linesCleared) {
+          case 1:
+            player.score += SCORES.SINGLE;
+            break;
+          case 2:
+            player.score += SCORES.DOUBLE;
+            break;
+          case 3:
+            player.score += SCORES.TRIPLE;
+            break;
+          case 4:
+            player.score += SCORES.TETRIS;
+            break;
+        }
+      }
+
       // Send penalty lines to opponents if more than one line was cleared
       if (linesCleared > 1) {
         const penaltyLinesToSend = linesCleared - 1;
@@ -243,6 +264,9 @@ class Game {
         if (player.isSoftDropping || isTimeToFall) {
           if (isTimeToFall) {
             player.lastFallTime = now;
+          } else if (this.gameMode === 'solo') {
+            // This fall was caused by a soft drop, so add score
+            player.score += SCORES.SOFT_DROP;
           }
 
           const piece = player.activePiece;
@@ -299,20 +323,26 @@ class Game {
   _endGame() {
     this.status = 'finished';
 
-    const activePlayers = this.players.filter(p => !p.hasLost);
-    if (activePlayers.length === 1) {
-      this.winner = activePlayers[0].name;
-    } else {
-      this.winner = 'Personne'; // No winner in case of a draw
+    if (this.gameMode === 'solo') {
+      this.winner = this.players[0] ? this.players[0].name : 'N/A';
+    } else { // multiplayer
+      const activePlayers = this.players.filter(p => !p.hasLost);
+      if (activePlayers.length === 1) {
+        this.winner = activePlayers[0].name;
+      } else {
+        const highestScorer = this.players.reduce((prev, current) => (prev.score > current.score) ? prev : current);
+        this.winner = highestScorer ? highestScorer.name : 'Personne';
+      }
     }
 
     console.log(`Game finished. Winner: ${this.winner}. Saving scores...`);
 
-    // Use the placeholder scoring logic to assign scores and save them
-    this.players.forEach(player => {
-      player.score = Math.floor(Math.random() * 1000);
-      addScore({ name: player.name, score: player.score });
-    });
+    // Save the final, calculated scores.
+    if (this.gameMode === 'solo') {
+      this.players.forEach(player => {
+        addScore({ name: player.name, score: player.score });
+      });
+    }
   }
 
   /**
@@ -402,16 +432,24 @@ class Game {
         player.isSoftDropping = true;
         // We can return early as the tick will handle the movement.
         return this.getCurrentGameState();
-      case 'hardDrop':
+      case 'hardDrop': {
+        const originalY = activePiece.position.y;
+        let testY = originalY;
         // Find the lowest valid position by checking downwards
-        while (this._isValidPosition(player, testPiece)) {
-          testPiece.position.y++;
+        while (this._isValidPosition(player, { ...activePiece, position: { x: activePiece.position.x, y: testY + 1 } })) {
+          testY++;
         }
-        // Once the loop finds an invalid position, step back one
-        testPiece.position.y--;
+
+        // Calculate score based on distance
+        if (this.gameMode === 'solo') {
+          const distance = testY - originalY;
+          if (distance > 0) {
+            player.score += distance * SCORES.HARD_DROP;
+          }
+        }
 
         // Directly update the player's piece position
-        player.activePiece.position = testPiece.position;
+        player.activePiece.position.y = testY;
 
         // Lock the piece and get a new one immediately
         this._lockPiece(player);
@@ -423,6 +461,7 @@ class Game {
         // Since the state is immediately and drastically changed, we can return early
         // The regular validation path isn't needed for hard drop.
         return this.getCurrentGameState();
+      }
       // case 'rotate':
       //   // Rotation logic will go here
       //   break;
@@ -450,6 +489,7 @@ class Game {
     return {
       status: this.status,
       winner: this.winner,
+      gameMode: this.gameMode,
       players: this.players.map(player => ({
         id: player.id,
         name: player.name,
@@ -551,31 +591,6 @@ class Game {
 
         player.assignNewPiece(newPiece);
       });
-
-      // La logique de fin de partie et de sauvegarde des scores.
-      // Pour l'instant, on simule une fin de partie après 5 secondes.
-      // À l'avenir, la fin de partie sera déclenchée par la logique du jeu (ex: un seul joueur restant).
-    //   setTimeout(() => {
-    //     if (this.status !== 'playing') return;
-
-    //     // Logique de score factice : chaque joueur obtient un score aléatoire.
-    //     this.players.forEach(player => {
-    //       player.score = Math.floor(Math.random() * 1000);
-    //     });
-
-    //     // Trouve le gagnant (celui avec le plus haut score)
-    //     const winner = this.players.reduce((prev, current) => (prev.score > current.score) ? prev : current, {});
-    //     this.winner = winner.name || 'Personne';
-
-    //     this.status = 'finished';
-    //     console.log(`Game finished. Winner: ${this.winner}. Saving scores...`);
-
-    //     // Sauvegarde chaque score dans la base de données.
-    //     this.players.forEach(player => {
-    //       addScore({ name: player.name, score: player.score });
-    //     });
-
-    //   }, 5000);
     }
   }
 }
