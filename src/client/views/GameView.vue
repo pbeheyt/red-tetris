@@ -18,6 +18,10 @@ const handleStartGame = () => {
   gameStore.sendStartGame();
 };
 
+const handleRestartGame = () => {
+  gameStore.sendRestartGame();
+};
+
 const handleLeaveGame = () => {
   gameStore.leaveGame();
   router.push('/menu');
@@ -98,6 +102,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
       </div>
 
       <button @click="handleLeaveGame" class="leave-button">Retourner au menu</button>
+      <button v-if="gameStore.isCurrentUserHost" @click="handleRestartGame" class="restart-button">Rejouer</button>
     </div>
 
     <!-- Section Lobby -->
@@ -285,5 +290,14 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
   display: flex;
   justify-content: space-around;
   text-align: left;
+}
+
+.restart-button {
+  background-color: #007bff;
+  margin-left: 10px;
+}
+
+.restart-button:hover {
+  background-color: #0069d9;
 }
 </style>

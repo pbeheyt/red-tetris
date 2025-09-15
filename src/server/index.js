@@ -125,9 +125,8 @@ const initEngine = (io) => {
           // Si le tick nous informe que la partie est terminée, on arrête la boucle.
           if (newState.status === 'finished') {
             loginfo(`Game in room '${roomName}' has finished. Stopping game loop.`);
-            clearInterval(intervalId);
-            // On ne supprime pas la partie ici, on la laisse pour consultation
-            // jusqu'à ce que tous les joueurs partent.
+            clearInterval(gameIntervals[roomName]);
+            delete gameIntervals[roomName]; // Clean up the interval ID
           }
         }, SERVER_TICK_RATE_MS);
         gameIntervals[roomName] = intervalId;
@@ -135,6 +134,31 @@ const initEngine = (io) => {
         io.to(roomName).emit('gameStateUpdate', game.getCurrentGameState());
         // Met à jour la liste des lobbies car cette partie n'est plus joignable
         broadcastLobbies(io);
+      }
+    });
+
+    socket.on('restartGame', () => {
+      const roomName = socket.data.roomName;
+      const game = activeGames[roomName];
+      // Only the host can restart the game
+      if (game && game.players.find(p => p.id === socket.id)?.isHost) {
+        loginfo(`Host ${socket.id} is restarting the game in room '${roomName}'`);
+        game.restart();
+
+        // Start a new game loop for the restarted game
+        const newIntervalId = setInterval(() => {
+          const newState = game.tick();
+          io.to(roomName).emit('gameStateUpdate', newState);
+
+          if (newState.status === 'finished') {
+            loginfo(`Game in room '${roomName}' has finished after restart. Stopping game loop.`);
+            clearInterval(gameIntervals[roomName]);
+            delete gameIntervals[roomName];
+          }
+        }, SERVER_TICK_RATE_MS);
+        gameIntervals[roomName] = newIntervalId;
+
+        io.to(roomName).emit('gameStateUpdate', game.getCurrentGameState());
       }
     });
 

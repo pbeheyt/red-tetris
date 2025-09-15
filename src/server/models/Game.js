@@ -367,6 +367,31 @@ class Game {
   }
 
   /**
+   * Resets the game to its initial state for a new round.
+   */
+  restart() {
+    // Reset game-level properties
+    this.status = 'playing';
+    this.winner = null;
+
+    // Reset piece sequence
+    this.masterPieceSequence = [];
+    this._generateNewBag();
+    this._generateNewBag();
+
+    // Reset each player
+    this.players.forEach(player => {
+      player.reset();
+      const firstPieceType = this._getPieceTypeForPlayer(player);
+      const newPiece = new Piece(firstPieceType);
+      newPiece.position.x = Math.floor(BOARD_WIDTH / 2) - Math.floor(newPiece.shape[0].length / 2);
+      player.assignNewPiece(newPiece);
+    });
+
+    console.log('Game has been restarted!');
+  }
+
+  /**
    * Gère une action effectuée par un joueur.
    * @param {string} playerId - L'ID du joueur qui effectue l'action.
    * @param {('moveLeft'|'moveRight'|'rotate'|'softDrop'|'hardDrop')} action - L'action effectuée.
