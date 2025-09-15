@@ -125,6 +125,10 @@ test:
 	@echo "Running tests..."
 	$(COMPOSE) exec $(SERVICE_DEV) npm test
 
+test-coverage:
+	@echo "Running tests with coverage..."
+	$(COMPOSE) exec $(SERVICE_DEV) npm test -- --coverage
+
 lint:
 	@echo "Running ESLint..."
 	$(COMPOSE) exec $(SERVICE_DEV) npm run lint
