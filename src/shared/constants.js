@@ -45,6 +45,17 @@ export const TETROMINO_COLORS = {
 
 export const PENALTY_COLOR = '#666666'; // Gray for penalty lines
 
+// Scoring system
+// https://tetris.wiki/Scoring
+export const SCORES = {
+  SINGLE: 40,
+  DOUBLE: 100,
+  TRIPLE: 300,
+  TETRIS: 1200,
+  SOFT_DROP: 1, // Points per cell
+  HARD_DROP: 2, // Points per cell
+};
+
 // Taille minimale d'un carré (pour le rendu responsive)
 export const MIN_TILE_PX = 12;
 export const MAX_TILE_PX = 32;

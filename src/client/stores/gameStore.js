@@ -38,6 +38,8 @@ export const useGameStore = defineStore('game', {
     isCurrentUserHost: (state) => state.currentPlayer?.isHost || false,
     // Renvoie la liste de tous les joueurs dans la partie
     playerList: (state) => state.gameState?.players || [],
+    // Returns the current game mode ('solo' or 'multiplayer')
+    gameMode: (state) => state.gameState?.gameMode || 'multiplayer',
     // Renvoie le nom du gagnant si la partie est terminée
     gameWinner: (state) => state.gameState?.winner || null,
     // Renvoie la liste des spectateurs
@@ -63,6 +65,7 @@ export const useGameStore = defineStore('game', {
 
       // Met en place les écouteurs pour les événements spécifiques au jeu.
       socketService.on('gameStateUpdate', (newState) => {
+        console.log('Received gameStateUpdate from server:', newState); // <-- DEBUG LOG
         this.gameState = newState;
       });
 
@@ -103,7 +106,7 @@ export const useGameStore = defineStore('game', {
      */
     connectAndJoin(roomName, playerName, isSpectator = false) {
       const joinPayload = { roomName, playerName, isSpectator };
-      
+
       if (socketState.isConnected) {
         console.log('GameStore: Already connected, emitting joinGame.');
         socketService.emit('joinGame', joinPayload);

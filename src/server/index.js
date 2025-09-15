@@ -86,8 +86,8 @@ const initEngine = (io) => {
         if (!game) {
           loginfo(`Creating new game in room '${roomName}' for host ${playerName}`);
           const hostInfo = { id: socket.id, name: playerName };
-          const pieceSequence = []; // TODO: Implémenter la génération de pièces
-          game = new Game(hostInfo, pieceSequence);
+          const gameMode = roomName.startsWith('solo-') ? 'solo' : 'multiplayer';
+          game = new Game(hostInfo, gameMode);
           activeGames[roomName] = game;
         } else {
           loginfo(`Player ${playerName} is joining existing game in room '${roomName}'`);
