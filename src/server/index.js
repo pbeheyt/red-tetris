@@ -107,7 +107,10 @@ const initEngine = (io) => {
     socket.on('startGame', () => {
       const roomName = socket.data.roomName;
       const game = activeGames[roomName];
-      if (game && game.players[0].id === socket.id) { // Vérifie si le joueur est l'hôte
+      // Check if the game can start (host + more than one player in multiplayer)
+      const canStart = game.gameMode === 'solo' || (game.players.length > 1);
+
+      if (game && game.players[0].id === socket.id && canStart) { // Vérifie si le joueur est l'hôte
         // Prevent the game from being started multiple times
         if (game.status !== 'lobby' || gameIntervals[roomName]) {
           loginfo(`Attempted to start an already running game in room '${roomName}'. Ignoring.`);
@@ -140,8 +143,10 @@ const initEngine = (io) => {
     socket.on('restartGame', () => {
       const roomName = socket.data.roomName;
       const game = activeGames[roomName];
-      // Only the host can restart the game
-      if (game && game.players.find(p => p.id === socket.id)?.isHost) {
+      // Only the host can restart, and only if there are enough players in multiplayer
+      const canRestart = game.gameMode === 'solo' || (game.players.length > 1);
+
+      if (game && game.players.find(p => p.id === socket.id)?.isHost && canRestart) {
         loginfo(`Host ${socket.id} is restarting the game in room '${roomName}'`);
         game.restart();
 

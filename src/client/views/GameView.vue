@@ -102,7 +102,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
       </div>
 
       <button @click="handleLeaveGame" class="leave-button">Retourner au menu</button>
-      <button v-if="gameStore.isCurrentUserHost" @click="handleRestartGame" class="restart-button">Rejouer</button>
+      <button v-if="gameStore.isCurrentUserHost && gameStore.playerList.length > 1" @click="handleRestartGame" class="restart-button">Rejouer</button>
     </div>
 
     <!-- Section Lobby -->
@@ -115,12 +115,15 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
         </li>
       </ul>
       <button
-        v-if="gameStore.isCurrentUserHost"
+        v-if="gameStore.isCurrentUserHost && gameStore.playerList.length > 1"
         @click="handleStartGame"
         class="start-button"
       >
         Démarrer la Partie
       </button>
+      <p v-else-if="gameStore.isCurrentUserHost && gameStore.playerList.length <= 1">
+        En attente d'autres joueurs...
+      </p>
       <p v-else>En attente que l'hôte démarre la partie.</p>
     </div>
 
