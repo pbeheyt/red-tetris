@@ -29,7 +29,7 @@ describe('Game Store', () => {
   beforeEach(() => {
     // 1. Crée une nouvelle instance de Pinia pour garantir l'isolation des tests.
     setActivePinia(createPinia());
-    
+
     // 2. Réinitialise l'état du mock et l'historique des appels entre les tests.
     vi.clearAllMocks();
     socketState.isConnected = false;
@@ -123,7 +123,7 @@ describe('Game Store', () => {
 
       // Assert
       expect(socketService.emit).toHaveBeenCalledTimes(1);
-      expect(socketService.emit).toHaveBeenCalledWith('joinGame', { roomName, playerName });
+      expect(socketService.emit).toHaveBeenCalledWith('joinGame', { roomName, playerName, isSpectator: false });
     });
 
     it('`connectAndJoin` should register a "once connect" listener if not connected', () => {
