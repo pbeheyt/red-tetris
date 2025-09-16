@@ -236,6 +236,17 @@ th {
   background-color: #f2f2f2;
 }
 
+.join-button {
+  background-color: #28a745;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 0.9em;
+}
+
 .join-button:disabled {
   background-color: #a0a0a0;
   cursor: not-allowed;
@@ -256,18 +267,16 @@ th {
 }
 
 .status {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-weight: bold;
   font-size: 0.9em;
-  color: white;
+  color: black;
 }
+
 .status-lobby {
-  background-color: #28a745; /* green */
+  color: #28a745; /* green */
 }
+
 .status-playing {
-  background-color: #ffc107; /* yellow */
-  color: #333;
+  color: #ffc107; /* yellow */
 }
 
 .no-lobbies-message {
