@@ -51,6 +51,38 @@ describe('Game Model', () => {
     });
   });
 
+  describe('Spectator Management', () => {
+    let game;
+    const hostInfo = { id: 'host123', name: 'HostPlayer' };
+
+    beforeEach(() => {
+      game = new Game(hostInfo, 'multiplayer');
+    });
+
+    it('should add a spectator', () => {
+      const spectatorInfo = { id: 'spec1', name: 'Spectator1' };
+      game.addSpectator(spectatorInfo);
+      expect(game.spectators.length).toBe(1);
+      expect(game.spectators[0].name).toBe('Spectator1');
+    });
+
+    it('should not add a duplicate spectator', () => {
+      const spectatorInfo = { id: 'spec1', name: 'Spectator1' };
+      game.addSpectator(spectatorInfo);
+      game.addSpectator(spectatorInfo); // Add the same spectator again
+      expect(game.spectators.length).toBe(1);
+    });
+
+    it('should remove a spectator', () => {
+      const spectatorInfo = { id: 'spec1', name: 'Spectator1' };
+      game.addSpectator(spectatorInfo);
+      expect(game.spectators.length).toBe(1);
+
+      game.removeSpectator(spectatorInfo.id);
+      expect(game.spectators.length).toBe(0);
+    });
+  });
+
   describe('Game Logic and Collision', () => {
     let game;
     let player1;
@@ -106,6 +138,37 @@ describe('Game Model', () => {
 
       // The shape should have changed after a valid rotation
       expect(player1.activePiece.shape).not.toEqual(initialShape);
+    });
+
+    it('should set the soft drop flag on player for softDrop action', () => {
+      expect(player1.isSoftDropping).toBe(false);
+      game.handlePlayerAction('p1', 'softDrop');
+      expect(player1.isSoftDropping).toBe(true);
+    });
+
+    it('should perform a hard drop correctly', () => {
+      // Piece starts at y=0 (from startGame)
+      player1.activePiece.position = { x: 4, y: 0 };
+      const initialPieceType = player1.activePiece.type;
+      const initialScore = player1.score;
+
+      // The piece should drop to the bottom row (y=19) as the board is empty.
+      // Assuming piece height is 1 for simplicity.
+      player1.activePiece.shape = [[1]];
+      const dropDistance = (BOARD_HEIGHT - 1) - 0;
+
+      game.handlePlayerAction('p1', 'hardDrop');
+
+      // 1. A new piece should be assigned
+      expect(player1.activePiece).not.toBeNull();
+      expect(player1.activePiece.type).not.toBe(initialPieceType); // A new piece from the sequence
+      expect(player1.activePiece.position.y).toBe(0); // New piece at the top
+
+      // 2. The old piece should be locked on the board at the bottom
+      expect(player1.board[BOARD_HEIGHT - 1][4]).not.toBe(0);
+
+      // 3. Score should be added (solo mode)
+      expect(player1.score).toBe(initialScore + (dropDistance * 2)); // SCORES.HARD_DROP is 2
     });
   });
 

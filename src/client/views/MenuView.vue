@@ -83,6 +83,7 @@ const handleChangeName = () => {
               <th>Nom de la Partie</th>
               <th>Hôte</th>
               <th>Joueurs</th>
+              <th>Statut</th>
               <th colspan="2">Action</th>
             </tr>
           </thead>
@@ -92,7 +93,14 @@ const handleChangeName = () => {
               <td>{{ lobby.hostName }}</td>
               <td>{{ lobby.playerCount }} / 4</td>
               <td>
-                <button @click="joinGame(lobby.roomName)" class="join-button">Rejoindre</button>
+                <span :class="['status', `status-${lobby.status}`]">{{ lobby.status }}</span>
+              </td>
+              <td>
+                <button
+                  @click="joinGame(lobby.roomName)"
+                  class="join-button"
+                  :disabled="lobby.status === 'playing'"
+                >Rejoindre</button>
               </td>
               <td>
                 <button @click="spectateGame(lobby.roomName)" class="spectate-button">Spectateur</button>
@@ -221,6 +229,7 @@ th, td {
   padding: 12px 15px;
   border-bottom: 1px solid #ddd;
   text-align: left;
+  vertical-align: middle;
 }
 
 th {
@@ -228,17 +237,19 @@ th {
 }
 
 .join-button {
-  background-color: #007bff;
+  background-color: #28a745;
   color: white;
   padding: 8px 12px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.2s;
+  font-size: 0.9em;
 }
 
-.join-button:hover {
-  background-color: #0056b3;
+.join-button:disabled {
+  background-color: #a0a0a0;
+  cursor: not-allowed;
 }
 
 .spectate-button {
@@ -253,6 +264,19 @@ th {
 
 .spectate-button:hover {
   background-color: #5a6268;
+}
+
+.status {
+  font-size: 0.9em;
+  color: black;
+}
+
+.status-lobby {
+  color: #28a745; /* green */
+}
+
+.status-playing {
+  color: #ffc107; /* yellow */
 }
 
 .no-lobbies-message {

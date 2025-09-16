@@ -44,6 +44,15 @@ if (route.query.solo === 'true') {
 }
 // -----------------------------------------
 
+// --- DEBUG WATCHER for Spectator Mode ---
+watch(
+  () => [gameStore.gameStatus, gameStore.isCurrentUserSpectator],
+  ([status, isSpectator]) => {
+    console.log(`[Spectator Debug] Status: ${status}, IsSpectator: ${isSpectator}`);
+  }
+);
+// ----------------------------------------
+
 // onMounted s'exécute une seule fois lorsque le composant est monté.
 // C'est le moment idéal pour rejoindre la partie, car la connexion
 // globale est déjà gérée par App.vue.
@@ -128,7 +137,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
     </div>
 
     <!-- Section Jeu (pour les joueurs) -->
-    <div class="game-main-area" v-if="gameStore.gameStatus === 'playing' || (gameStore.gameStatus === 'finished' && gameStore.currentPlayer)">
+    <div class="game-main-area" v-if="!gameStore.isCurrentUserSpectator && (gameStore.gameStatus === 'playing' || (gameStore.gameStatus === 'finished' && gameStore.currentPlayer))">
       <!-- Main board for the current player -->
       <GameBoard
         :board="gameStore.board"
@@ -147,6 +156,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
     <div v-if="gameStore.isCurrentUserSpectator" class="spectator-container">
       <h2>Mode Spectateur</h2>
       <p>Vous observez la partie. Voici les participants :</p>
+
       <div class="participant-lists">
         <div class="player-list">
           <h3>Joueurs</h3>
@@ -165,12 +175,23 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
           </ul>
         </div>
       </div>
-      <!-- À l'avenir, on pourrait afficher les plateaux de tous les joueurs ici -->
+
+      <!-- Live game view for spectators -->
+      <div v-if="gameStore.gameStatus === 'playing' || gameStore.gameStatus === 'finished'" class="spectator-game-view">
+        <MultiBoardGrid
+          :players="gameStore.playerList"
+          :container-width="containerWidth"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.spectator-game-view {
+  margin-top: 20px;
+}
+
 .game-main-area {
   display: flex;
   justify-content: center;
