@@ -157,7 +157,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
       <h2>Mode Spectateur</h2>
       <p>Vous observez la partie. Voici les participants :</p>
 
-      <div v-if="gameStore.gameStatus === 'lobby'" class="participant-lists">
+      <div class="participant-lists">
         <div class="player-list">
           <h3>Joueurs</h3>
           <ul>
@@ -188,6 +188,10 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
 </template>
 
 <style scoped>
+.spectator-game-view {
+  margin-top: 20px;
+}
+
 .game-main-area {
   display: flex;
   justify-content: center;
@@ -319,9 +323,5 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
 
 .restart-button:hover {
   background-color: #0069d9;
-}
-
-.spectator-game-view {
-  margin-top: 20px;
 }
 </style>

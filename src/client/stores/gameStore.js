@@ -161,7 +161,7 @@ export const useGameStore = defineStore('game', {
       if (socketState.isConnected) {
         socketService.emit('leaveGame');
       }
-      this.gameState = null; // Nettoyage immédiat de l'état côté client
+      this.$reset(); // Immediately clear the local state
     },
 
     /**

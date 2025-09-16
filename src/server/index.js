@@ -25,11 +25,12 @@ const gameIntervals = {};
  */
 const broadcastLobbies = (io) => {
   const joinableLobbies = Object.entries(activeGames)
-    .filter(([roomName, game]) => game.status === 'lobby')
+    .filter(([roomName, game]) => game.status === 'lobby' || game.status === 'playing')
     .map(([roomName, game]) => ({
       roomName: roomName,
       hostName: game.players[0].name,
       playerCount: game.players.length,
+      status: game.status,
     }));
 
   io.to(LOBBY_ROOM).emit('lobbiesListUpdate', joinableLobbies);
@@ -45,11 +46,12 @@ const initEngine = (io) => {
       loginfo(`Socket ${socket.id} entered lobby browser.`);
       // Envoie la liste actuelle dès qu'un utilisateur ouvre le menu
       const joinableLobbies = Object.entries(activeGames)
-        .filter(([roomName, game]) => game.status === 'lobby')
+        .filter(([roomName, game]) => game.status === 'lobby' || game.status === 'playing')
         .map(([roomName, game]) => ({
           roomName: roomName,
           hostName: game.players[0].name,
           playerCount: game.players.length,
+          status: game.status,
         }));
       socket.emit('lobbiesListUpdate', joinableLobbies);
     });
@@ -66,6 +68,12 @@ const initEngine = (io) => {
     });
 
     socket.on('joinGame', ({ roomName, playerName, isSpectator }) => {
+      // If the socket is already in a room, handle the leave process first.
+      if (socket.data.roomName && socket.data.roomName !== roomName) {
+        loginfo(`Socket ${socket.id} is switching rooms. Leaving '${socket.data.roomName}' first.`);
+        handleParticipantLeave(socket);
+      }
+
       loginfo(`User ${playerName} (${socket.id}) trying to join room '${roomName}' as ${isSpectator ? 'spectator' : 'player'}`);
       socket.join(roomName);
       socket.data.roomName = roomName;
@@ -185,6 +193,10 @@ const initEngine = (io) => {
     const handleParticipantLeave = (socket) => {
       const roomName = socket.data.roomName;
       if (!roomName) return;
+
+      // Make the socket leave the Socket.IO room to stop receiving broadcasts.
+      socket.leave(roomName);
+      loginfo(`Socket ${socket.id} has left Socket.IO room '${roomName}'`);
 
       const game = activeGames[roomName];
       if (!game) return;
