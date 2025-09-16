@@ -141,5 +141,72 @@ describe('Game Store', () => {
       expect(socketService.once).toHaveBeenCalledTimes(1);
       expect(socketService.once).toHaveBeenCalledWith('connect', expect.any(Function));
     });
+
+    it('`sendStartGame` should emit "startGame" when connected', () => {
+      const store = useGameStore();
+      socketState.isConnected = true;
+      store.sendStartGame();
+      expect(socketService.emit).toHaveBeenCalledWith('startGame');
+    });
+
+    it('`sendStartGame` should not emit when not connected', () => {
+      const store = useGameStore();
+      socketState.isConnected = false;
+      store.sendStartGame();
+      expect(socketService.emit).not.toHaveBeenCalled();
+    });
+
+    it('`sendRestartGame` should emit "restartGame" when connected', () => {
+      const store = useGameStore();
+      socketState.isConnected = true;
+      store.sendRestartGame();
+      expect(socketService.emit).toHaveBeenCalledWith('restartGame');
+    });
+
+    it('`leaveGame` should emit "leaveGame" and reset state', () => {
+      const store = useGameStore();
+      store.gameState = { status: 'playing' }; // Set some initial state
+      socketState.isConnected = true;
+
+      store.leaveGame();
+
+      expect(socketService.emit).toHaveBeenCalledWith('leaveGame');
+      expect(store.gameState).toBeNull();
+    });
+
+    it('`initializeStore` should call connect and register listeners', () => {
+      const store = useGameStore();
+      store.initializeStore();
+      expect(socketService.connect).toHaveBeenCalledTimes(1);
+      expect(socketService.on).toHaveBeenCalledWith('gameStateUpdate', expect.any(Function));
+    });
+
+    it('`enterLobbyBrowser` should emit when connected', () => {
+      const store = useGameStore();
+      socketState.isConnected = true;
+      store.enterLobbyBrowser();
+      expect(socketService.emit).toHaveBeenCalledWith('enterLobbyBrowser');
+    });
+
+    it('`enterLobbyBrowser` should wait for connect if not connected', () => {
+      const store = useGameStore();
+      socketState.isConnected = false;
+      store.enterLobbyBrowser();
+      expect(socketService.once).toHaveBeenCalledWith('connect', expect.any(Function));
+    });
+
+    it('`fetchLeaderboard` should emit when connected', () => {
+      const store = useGameStore();
+      socketState.isConnected = true;
+      store.fetchLeaderboard();
+      expect(socketService.emit).toHaveBeenCalledWith('getLeaderboard');
+    });
+
+    it('`fetchLeaderboard` should wait for connect if not connected', () => {
+      const store = useGameStore();
+      socketState.isConnected = false;
+      store.fetchLeaderboard();
+      expect(socketService.once).toHaveBeenCalledWith('connect', expect.any(Function));
+    });
   });
 });
