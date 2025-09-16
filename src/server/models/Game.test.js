@@ -31,6 +31,24 @@ describe('Game Model', () => {
       expect(game.players[0].isHost).toBe(true);
       expect(game.players[0].name).toBe('Player2');
     });
+
+    it('should end the game when only one player remains', () => {
+      game.addPlayer({ id: 'p2', name: 'Player2' });
+      game.startGame(); // The game must be in 'playing' state
+
+      game.removePlayer('p2');
+
+      expect(game.players.length).toBe(1);
+      expect(game.status).toBe('finished');
+      expect(game.winner).toBe(hostInfo.name);
+    });
+
+    it('should not add a player if the game has already started', () => {
+      game.startGame();
+      const result = game.addPlayer({ id: 'p3', name: 'Latecomer' });
+      expect(result).toBe(false);
+      expect(game.players.length).toBe(1);
+    });
   });
 
   describe('Game Logic and Collision', () => {
@@ -72,6 +90,22 @@ describe('Game Model', () => {
 
       // The piece's X position should not have changed
       expect(player1.activePiece.position.x).toBe(4);
+    });
+
+    it('should allow a piece to move left when valid', () => {
+      player1.activePiece.position = { x: 5, y: 5 };
+      game.handlePlayerAction('p1', 'moveLeft');
+      expect(player1.activePiece.position.x).toBe(4);
+    });
+
+    it('should allow a piece to rotate when valid', () => {
+      player1.activePiece.type = 'T';
+      const initialShape = JSON.parse(JSON.stringify(player1.activePiece.shape));
+
+      game.handlePlayerAction('p1', 'rotate');
+
+      // The shape should have changed after a valid rotation
+      expect(player1.activePiece.shape).not.toEqual(initialShape);
     });
   });
 
