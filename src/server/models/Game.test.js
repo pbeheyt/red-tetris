@@ -51,6 +51,38 @@ describe('Game Model', () => {
     });
   });
 
+  describe('Spectator Management', () => {
+    let game;
+    const hostInfo = { id: 'host123', name: 'HostPlayer' };
+
+    beforeEach(() => {
+      game = new Game(hostInfo, 'multiplayer');
+    });
+
+    it('should add a spectator', () => {
+      const spectatorInfo = { id: 'spec1', name: 'Spectator1' };
+      game.addSpectator(spectatorInfo);
+      expect(game.spectators.length).toBe(1);
+      expect(game.spectators[0].name).toBe('Spectator1');
+    });
+
+    it('should not add a duplicate spectator', () => {
+      const spectatorInfo = { id: 'spec1', name: 'Spectator1' };
+      game.addSpectator(spectatorInfo);
+      game.addSpectator(spectatorInfo); // Add the same spectator again
+      expect(game.spectators.length).toBe(1);
+    });
+
+    it('should remove a spectator', () => {
+      const spectatorInfo = { id: 'spec1', name: 'Spectator1' };
+      game.addSpectator(spectatorInfo);
+      expect(game.spectators.length).toBe(1);
+
+      game.removeSpectator(spectatorInfo.id);
+      expect(game.spectators.length).toBe(0);
+    });
+  });
+
   describe('Game Logic and Collision', () => {
     let game;
     let player1;
