@@ -77,6 +77,7 @@ export const useGameStore = defineStore('game', {
 
         // 1. Son de Game Over
         if (newState.status === 'finished' && oldState.status === 'playing') {
+          console.log('[Audio Debug] Playing: Game Over Sound');
           audioService.playGameOver();
           return; // Arrête les autres vérifications de son
         }
@@ -91,6 +92,7 @@ export const useGameStore = defineStore('game', {
         // 2. Son de Ligne Complétée (basé sur l'augmentation du score)
         const scoreDiff = newPlayer.score - oldPlayer.score;
         if ([40, 100, 300, 1200].includes(scoreDiff)) {
+          console.log('[Audio Debug] Playing: Line Clear Sound');
           audioService.playLineClear();
         }
 
@@ -104,16 +106,19 @@ export const useGameStore = defineStore('game', {
         // 3. Son de Verrouillage de Pièce (Hard Drop ou normal)
         // Une nouvelle pièce est assignée quand le pieceIndex change.
         if (oldPlayer.pieceIndex !== newPlayer.pieceIndex) {
+          console.log('[Audio Debug] Playing: Hard Drop/Lock Sound');
           audioService.playHardDrop();
         } else {
           // Si c'est la même pièce, on vérifie le mouvement ou la rotation.
           // 4. Son de Rotation
           // Comparer les formes via JSON.stringify est un moyen simple de détecter un changement.
           if (JSON.stringify(oldPiece.shape) !== JSON.stringify(newPiece.shape)) {
+            console.log('[Audio Debug] Playing: Rotate Sound');
             audioService.playRotate();
           }
           // 5. Son de Mouvement
           else if (oldPiece.position.x !== newPiece.position.x) {
+            console.log('[Audio Debug] Playing: Move Sound');
             audioService.playMove();
           }
         }
