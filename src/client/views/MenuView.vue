@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '../stores/userStore';
 import { useGameStore } from '../stores/gameStore';
+import BaseButton from '../components/ui/BaseButton.vue';
 
 const userStore = useUserStore();
 const gameStore = useGameStore();
@@ -58,9 +59,9 @@ const handleChangeName = () => {
       <h2>Menu Principal</h2>
       <div class="welcome-message">
         <p>Bonjour, <strong>{{ userStore.playerName }}</strong> !</p>
-        <button @click="handleChangeName" class="change-name-button">Changer de nom</button>
+        <BaseButton @click="handleChangeName" variant="secondary" style="padding: 5px 10px; font-size: 0.8em;">Changer de nom</BaseButton>
       </div>
-      <button @click="startSoloGame" class="menu-button solo">Mode Solo</button>
+      <BaseButton @click="startSoloGame" variant="success" style="padding: 15px 25px;">Mode Solo</BaseButton>
 
       <form @submit.prevent="createMultiplayerGame" class="create-game-form">
         <input
@@ -70,7 +71,7 @@ const handleChangeName = () => {
           required
           class="room-name-input"
         />
-        <button type="submit" class="menu-button multi-create">Créer une partie</button>
+        <BaseButton type="submit" variant="info" style="padding: 15px 25px;">Créer une partie</BaseButton>
       </form>
     </div>
 
@@ -96,14 +97,15 @@ const handleChangeName = () => {
                 <span :class="['status', `status-${lobby.status}`]">{{ lobby.status }}</span>
               </td>
               <td>
-                <button
+                <BaseButton
                   @click="joinGame(lobby.roomName)"
-                  class="join-button"
+                  variant="success"
                   :disabled="lobby.status === 'playing'"
-                >Rejoindre</button>
+                  style="padding: 8px 12px; font-size: 0.9em;"
+                >Rejoindre</BaseButton>
               </td>
               <td>
-                <button @click="spectateGame(lobby.roomName)" class="spectate-button">Spectateur</button>
+                <BaseButton @click="spectateGame(lobby.roomName)" variant="secondary" style="padding: 8px 12px; font-size: 0.9em;">Spectateur</BaseButton>
               </td>
             </tr>
           </tbody>
@@ -152,19 +154,6 @@ const handleChangeName = () => {
   margin-bottom: 15px;
 }
 
-.change-name-button {
-  background-color: #6c757d;
-  color: white;
-  padding: 5px 10px;
-  font-size: 0.8em;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.change-name-button:hover {
-  background-color: #5a6268;
-}
 
 .menu-container {
   display: flex;
@@ -198,22 +187,6 @@ const handleChangeName = () => {
   flex-grow: 1;
 }
 
-.menu-button {
-  color: white;
-  padding: 15px 25px;
-  font-size: 1.1em;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: opacity 0.3s;
-}
-
-.menu-button:hover {
-  opacity: 0.9;
-}
-
-.solo { background-color: #28a745; }
-.multi-create { background-color: #17a2b8; }
 
 .lobbies-table-container {
   overflow-x: auto;
@@ -236,35 +209,6 @@ th {
   background-color: #f2f2f2;
 }
 
-.join-button {
-  background-color: #28a745;
-  color: white;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  font-size: 0.9em;
-}
-
-.join-button:disabled {
-  background-color: #a0a0a0;
-  cursor: not-allowed;
-}
-
-.spectate-button {
-  background-color: #6c757d;
-  color: white;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.spectate-button:hover {
-  background-color: #5a6268;
-}
 
 .status {
   font-size: 0.9em;

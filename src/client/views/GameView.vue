@@ -5,6 +5,7 @@ import { useGameStore } from '../stores/gameStore';
 import { state as socketState } from '../services/socketService.js';
 import GameBoard from '../components/GameBoard.vue';
 import MultiBoardGrid from '../components/MultiBoardGrid.vue';
+import BaseButton from '../components/ui/BaseButton.vue';
 
 const gameStore = useGameStore();
 const route = useRoute();
@@ -93,7 +94,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
         <p v-if="gameStore.gameMode === 'solo' && gameStore.gameStatus !== 'finished'">Score : <strong>{{ gameStore.currentPlayer?.score || 0 }}</strong></p>
         <p>État : <strong :style="{ color: socketState.isConnected ? 'green' : 'red' }">{{ socketState.isConnected ? 'Connecté' : 'En cours de connexion...' }}</strong></p>
       </div>
-      <button @click="handleLeaveGame" class="leave-button">Quitter</button>
+      <BaseButton @click="handleLeaveGame" variant="danger">Quitter</BaseButton>
     </div>
 
     <!-- Écran de fin de partie -->
@@ -110,8 +111,8 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
         </ul>
       </div>
 
-      <button @click="handleLeaveGame" class="leave-button">Retourner au menu</button>
-      <button v-if="gameStore.isCurrentUserHost && gameStore.playerList.length > 1" @click="handleRestartGame" class="restart-button">Rejouer</button>
+      <BaseButton @click="handleLeaveGame" variant="danger">Retourner au menu</BaseButton>
+      <BaseButton v-if="gameStore.isCurrentUserHost && gameStore.playerList.length > 1" @click="handleRestartGame" variant="primary" style="margin-left: 10px;">Rejouer</BaseButton>
     </div>
 
     <!-- Section Lobby -->
@@ -123,13 +124,14 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
           <span v-if="gameStore.gameMode === 'solo'">Score: {{ player.score || 0 }}</span>
         </li>
       </ul>
-      <button
+      <BaseButton
         v-if="gameStore.isCurrentUserHost && gameStore.playerList.length > 1"
         @click="handleStartGame"
-        class="start-button"
+        variant="success"
+        style="padding: 15px 32px; font-size: 16px; margin: 10px 2px;"
       >
         Démarrer la Partie
-      </button>
+      </BaseButton>
       <p v-else-if="gameStore.isCurrentUserHost && gameStore.playerList.length <= 1">
         En attente d'autres joueurs...
       </p>
@@ -211,19 +213,6 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
   margin: 0;
 }
 
-.leave-button {
-  background-color: #dc3545;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1em;
-}
-
-.leave-button:hover {
-  background-color: #c82333;
-}
 
 .game-over-container {
   border: 2px solid #ffc107;
@@ -265,24 +254,6 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
   font-size: 1.1em;
 }
 
-.start-button {
-  background-color: #4CAF50; /* Green */
-  border: none;
-  color: white;
-  padding: 15px 32px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  margin: 10px 2px;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: background-color 0.3s;
-}
-
-.start-button:hover {
-  background-color: #45a049;
-}
 
 .final-scores {
   list-style-type: none;
@@ -316,12 +287,4 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
   text-align: left;
 }
 
-.restart-button {
-  background-color: #007bff;
-  margin-left: 10px;
-}
-
-.restart-button:hover {
-  background-color: #0069d9;
-}
 </style>

@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '../stores/userStore';
+import BaseButton from '../components/ui/BaseButton.vue';
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -31,7 +32,7 @@ const continueToMenu = () => {
         required
         class="name-input"
       />
-      <button type="submit" class="continue-button">Continuer</button>
+      <BaseButton type="submit">Continuer</BaseButton>
     </form>
   </div>
 </template>
@@ -59,20 +60,5 @@ const continueToMenu = () => {
   font-size: 1em;
   border: 1px solid #ccc;
   border-radius: 4px;
-}
-
-.continue-button {
-  background-color: #007bff;
-  color: white;
-  padding: 12px;
-  font-size: 1.1em;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.continue-button:hover {
-  background-color: #0056b3;
 }
 </style>
