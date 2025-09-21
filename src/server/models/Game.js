@@ -16,6 +16,7 @@ import {
  * @property {string|null} winner - Le nom du gagnant si la partie est terminée.
  * @property {Array<PlayerState>} players - La liste des états de chaque joueur.
  * @property {Array<{id: string, name: string}>} spectators - La liste des spectateurs.
+ * @property {Array<string>} events - Une liste d'événements qui viennent de se produire (ex: 'lineClear', 'gameOver').
  */
 
 /**
@@ -50,6 +51,7 @@ class Game {
     this._generateNewBag();
     this.status = 'lobby'; // 'lobby' | 'playing' | 'finished'
     this.winner = null;
+    this.events = []; // Accumulateur d'événements pour les sons/animations
   }
 
   /**
@@ -145,6 +147,7 @@ class Game {
    * @param {Player} player - The player whose piece is to be locked.
    */
   _lockPiece(player) {
+    this.events.push('pieceLock');
     const { shape, position } = player.activePiece;
     const pieceId = TETROMINO_IDS[player.activePiece.type];
 
@@ -179,6 +182,7 @@ class Game {
     linesCleared = BOARD_HEIGHT - newBoard.length;
 
     if (linesCleared > 0) {
+      this.events.push('lineClear');
       console.log(`Player ${player.name} cleared ${linesCleared} lines.`);
       // Add new empty rows at the top of the board for each line cleared
       for (let i = 0; i < linesCleared; i++) {
@@ -250,6 +254,7 @@ class Game {
    * @returns {GameState} La "photographie" complète et à jour de l'état du jeu.
    */
   tick() {
+    this.events = []; // Réinitialise les événements à chaque tick
     const now = Date.now();
     // La boucle de jeu ne doit agir que si la partie est en cours.
     if (this.status === 'playing') {
@@ -321,6 +326,7 @@ class Game {
    * Ends the game, calculates scores, and sets the winner.
    */
   _endGame() {
+    this.events.push('gameOver');
     this.status = 'finished';
 
     if (this.gameMode === 'solo') {
@@ -398,6 +404,7 @@ class Game {
    * @returns {GameState} La "photographie" complète et à jour de l'état du jeu.
    */
   handlePlayerAction(playerId, action) {
+    this.events = []; // Réinitialise les événements à chaque action
     const player = this.players.find(p => p.id === playerId);
     if (!player || !player.activePiece) {
       return this.getCurrentGameState();
@@ -443,6 +450,7 @@ class Game {
 
           if (this._isValidPosition(player, tempPiece)) {
             // Found a valid position, apply rotation and kick
+            this.events.push('rotate');
             player.activePiece.shape = tempPiece.shape;
             player.activePiece.position = tempPiece.position;
             return this.getCurrentGameState(); // Success, exit handler
@@ -458,6 +466,7 @@ class Game {
         // We can return early as the tick will handle the movement.
         return this.getCurrentGameState();
       case 'hardDrop': {
+        this.events.push('hardDrop');
         const originalY = activePiece.position.y;
         let testY = originalY;
         // Find the lowest valid position by checking downwards
@@ -497,6 +506,9 @@ class Game {
 
     if (this._isValidPosition(player, testPiece)) {
       // If the new position is valid, update the actual active piece
+      if (action === 'moveLeft' || action === 'moveRight') {
+        this.events.push('move');
+      }
       player.activePiece.position = testPiece.position;
       player.activePiece.shape = testPiece.shape;
     }
@@ -509,9 +521,7 @@ class Game {
    * @returns {GameState}
    */
   getCurrentGameState() {
-    // Cette méthode construira l'objet GameState à partir de l'état interne de l'instance Game.
-    // C'est le Contrat n°2.
-    return {
+    const state = {
       status: this.status,
       winner: this.winner,
       gameMode: this.gameMode,
@@ -527,7 +537,10 @@ class Game {
         nextPieces: [],
       })),
       spectators: this.spectators,
+      events: [...this.events], // Envoie une copie des événements
     };
+    this.events = []; // Vide la liste après l'envoi
+    return state;
   }
 
   /**

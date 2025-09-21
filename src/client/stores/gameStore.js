@@ -66,61 +66,29 @@ export const useGameStore = defineStore('game', {
 
       // Met en place les écouteurs pour les événements spécifiques au jeu.
       socketService.on('gameStateUpdate', (newState) => {
-        const oldState = this.gameState;
         this.gameState = newState;
 
-        // --- Logique des Sons ---
-        // Ne joue pas de son s'il n'y avait pas d'état précédent ou si le jeu n'était pas en cours.
-        if (!oldState || oldState.status !== 'playing' || !newState) {
-          return;
+        // --- Nouvelle Logique de Sons (Pilotée par le Serveur) ---
+        if (!newState.events || newState.events.length === 0) {
+          return; // Pas d'événements à traiter
         }
 
-        // 1. Son de Game Over
-        if (newState.status === 'finished' && oldState.status === 'playing') {
-          console.log('[Audio Debug] Playing: Game Over Sound');
+        const events = newState.events;
+
+        // On traite les événements par ordre de priorité pour éviter les superpositions indésirables.
+        if (events.includes('gameOver')) {
           audioService.playGameOver();
-          return; // Arrête les autres vérifications de son
-        }
-
-        const oldPlayer = oldState.players.find(p => p.id === socketState.socketId);
-        const newPlayer = newState.players.find(p => p.id === socketState.socketId);
-
-        if (!oldPlayer || !newPlayer || newPlayer.hasLost) {
-          return; // Pas de données de joueur ou le joueur a perdu, rien à comparer.
-        }
-
-        // 2. Son de Ligne Complétée (basé sur l'augmentation du score)
-        const scoreDiff = newPlayer.score - oldPlayer.score;
-        if ([40, 100, 300, 1200].includes(scoreDiff)) {
-          console.log('[Audio Debug] Playing: Line Clear Sound');
+        } else if (events.includes('lineClear')) {
           audioService.playLineClear();
-        }
-
-        const oldPiece = oldPlayer.activePiece;
-        const newPiece = newPlayer.activePiece;
-
-        if (!oldPiece || !newPiece) {
-          return; // Pas de pièce active à comparer
-        }
-
-        // 3. Son de Verrouillage de Pièce (Hard Drop ou normal)
-        // Une nouvelle pièce est assignée quand le pieceIndex change.
-        if (oldPlayer.pieceIndex !== newPlayer.pieceIndex) {
-          console.log('[Audio Debug] Playing: Hard Drop/Lock Sound');
+        } else if (events.includes('hardDrop')) {
           audioService.playHardDrop();
-        } else {
-          // Si c'est la même pièce, on vérifie le mouvement ou la rotation.
-          // 4. Son de Rotation
-          // Comparer les formes via JSON.stringify est un moyen simple de détecter un changement.
-          if (JSON.stringify(oldPiece.shape) !== JSON.stringify(newPiece.shape)) {
-            console.log('[Audio Debug] Playing: Rotate Sound');
-            audioService.playRotate();
-          }
-          // 5. Son de Mouvement
-          else if (oldPiece.position.x !== newPiece.position.x) {
-            console.log('[Audio Debug] Playing: Move Sound');
-            audioService.playMove();
-          }
+        } else if (events.includes('pieceLock')) {
+          // Le son de verrouillage est le même que le hard drop
+          audioService.playHardDrop();
+        } else if (events.includes('rotate')) {
+          audioService.playRotate();
+        } else if (events.includes('move')) {
+          audioService.playMove();
         }
       });
 
