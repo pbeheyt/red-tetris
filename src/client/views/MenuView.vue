@@ -56,73 +56,75 @@ const handleChangeName = () => {
 
 <template>
   <div class="menu-container">
-    <BaseCard>
-      <template #header>
-        <h2>Menu Principal</h2>
-      </template>
-      <div class="welcome-message">
-        <p>Bonjour, <strong>{{ userStore.playerName }}</strong> !</p>
-        <BaseButton @click="handleChangeName" variant="secondary" class="change-name-button">Changer de nom</BaseButton>
-      </div>
+    <div class="top-section">
+      <BaseCard class="grid-card">
+        <template #header>
+          <h2>Menu Principal</h2>
+        </template>
+        <div class="welcome-message">
+          <p>Bonjour, <strong>{{ userStore.playerName }}</strong> !</p>
+          <BaseButton @click="handleChangeName" variant="secondary" class="change-name-button">Changer de nom</BaseButton>
+        </div>
 
-      <div class="main-actions">
-        <BaseButton @click="startSoloGame" variant="success">Mode Solo</BaseButton>
+        <div class="main-actions">
+          <BaseButton @click="startSoloGame" variant="success">Mode Solo</BaseButton>
 
-        <form @submit.prevent="createMultiplayerGame" class="create-game-form">
-          <input
-            v-model="newRoomName"
-            type="text"
-            placeholder="Nom de la nouvelle partie"
-            required
-            class="room-name-input"
-          />
-          <BaseButton type="submit" variant="info">Créer une partie</BaseButton>
-        </form>
-      </div>
-    </BaseCard>
+          <form @submit.prevent="createMultiplayerGame" class="create-game-form">
+            <input
+              v-model="newRoomName"
+              type="text"
+              placeholder="Nom de la nouvelle partie"
+              required
+              class="room-name-input"
+            />
+            <BaseButton type="submit" variant="info">Créer une partie</BaseButton>
+          </form>
+        </div>
+      </BaseCard>
 
-    <BaseCard>
-      <template #header>
-        <h3>Parties en attente</h3>
-      </template>
-      <div v-if="gameStore.lobbies.length > 0" class="lobbies-table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Nom de la Partie</th>
-              <th>Hôte</th>
-              <th>Joueurs</th>
-              <th>Statut</th>
-              <th colspan="2">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="lobby in gameStore.lobbies" :key="lobby.roomName">
-              <td>{{ lobby.roomName }}</td>
-              <td>{{ lobby.hostName }}</td>
-              <td>{{ lobby.playerCount }} / 4</td>
-              <td>
-                <span :class="['status', `status-${lobby.status}`]">{{ lobby.status }}</span>
-              </td>
-              <td>
-                <BaseButton
-                  @click="joinGame(lobby.roomName)"
-                  variant="success"
-                  :disabled="lobby.status === 'playing'"
-                  style="padding: 8px 12px; font-size: 0.9em;"
-                >Rejoindre</BaseButton>
-              </td>
-              <td>
-                <BaseButton @click="spectateGame(lobby.roomName)" variant="secondary" style="padding: 8px 12px; font-size: 0.9em;">Spectateur</BaseButton>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div v-else class="no-lobbies-message">
-        <p>Aucune partie en attente pour le moment. Pourquoi ne pas en créer une ?</p>
-      </div>
-    </BaseCard>
+      <BaseCard class="grid-card">
+        <template #header>
+          <h3>Parties en attente</h3>
+        </template>
+        <div v-if="gameStore.lobbies.length > 0" class="lobbies-table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Nom de la Partie</th>
+                <th>Hôte</th>
+                <th>Joueurs</th>
+                <th>Statut</th>
+                <th colspan="2">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="lobby in gameStore.lobbies" :key="lobby.roomName">
+                <td>{{ lobby.roomName }}</td>
+                <td>{{ lobby.hostName }}</td>
+                <td>{{ lobby.playerCount }} / 4</td>
+                <td>
+                  <span :class="['status', `status-${lobby.status}`]">{{ lobby.status }}</span>
+                </td>
+                <td>
+                  <BaseButton
+                    @click="joinGame(lobby.roomName)"
+                    variant="success"
+                    :disabled="lobby.status === 'playing'"
+                    style="padding: 8px 12px; font-size: 0.9em;"
+                  >Rejoindre</BaseButton>
+                </td>
+                <td>
+                  <BaseButton @click="spectateGame(lobby.roomName)" variant="secondary" style="padding: 8px 12px; font-size: 0.9em;">Spectateur</BaseButton>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div v-else class="no-lobbies-message">
+          <p>Aucune partie en attente pour le moment. Pourquoi ne pas en créer une ?</p>
+        </div>
+      </BaseCard>
+    </div>
 
     <BaseCard>
       <template #header>
@@ -260,5 +262,27 @@ th {
 .leaderboard td:first-child, .leaderboard th:first-child {
   font-weight: bold;
   text-align: center;
+}
+
+.top-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  align-items: start; /* Aligne le haut des cartes */
+}
+
+/* Cible les BaseCard DANS la top-section pour ajuster leur marge */
+.grid-card {
+  margin: 0; /* Annule la marge par défaut pour un meilleur ajustement dans la grille */
+  width: 100%; /* S'assure que la carte remplit sa cellule de grille */
+  max-width: none; /* Annule la max-width pour la même raison */
+}
+
+
+/* Responsive: Sur les petits écrans, on repasse à une seule colonne */
+@media (max-width: 900px) {
+  .top-section {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
