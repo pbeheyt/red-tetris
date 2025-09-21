@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { socketService, state as socketState } from '../services/socketService.js';
+import { audioService } from '../services/audioService.js';
 
 export const useGameStore = defineStore('game', {
   /**
@@ -65,8 +66,57 @@ export const useGameStore = defineStore('game', {
 
       // Met en place les écouteurs pour les événements spécifiques au jeu.
       socketService.on('gameStateUpdate', (newState) => {
-        console.log('Received gameStateUpdate from server:', newState); // <-- DEBUG LOG
+        const oldState = this.gameState;
         this.gameState = newState;
+
+        // --- Logique des Sons ---
+        // Ne joue pas de son s'il n'y avait pas d'état précédent ou si le jeu n'était pas en cours.
+        if (!oldState || oldState.status !== 'playing' || !newState) {
+          return;
+        }
+
+        // 1. Son de Game Over
+        if (newState.status === 'finished' && oldState.status === 'playing') {
+          audioService.playGameOver();
+          return; // Arrête les autres vérifications de son
+        }
+
+        const oldPlayer = oldState.players.find(p => p.id === socketState.socketId);
+        const newPlayer = newState.players.find(p => p.id === socketState.socketId);
+
+        if (!oldPlayer || !newPlayer || newPlayer.hasLost) {
+          return; // Pas de données de joueur ou le joueur a perdu, rien à comparer.
+        }
+
+        // 2. Son de Ligne Complétée (basé sur l'augmentation du score)
+        const scoreDiff = newPlayer.score - oldPlayer.score;
+        if ([40, 100, 300, 1200].includes(scoreDiff)) {
+          audioService.playLineClear();
+        }
+
+        const oldPiece = oldPlayer.activePiece;
+        const newPiece = newPlayer.activePiece;
+
+        if (!oldPiece || !newPiece) {
+          return; // Pas de pièce active à comparer
+        }
+
+        // 3. Son de Verrouillage de Pièce (Hard Drop ou normal)
+        // Une nouvelle pièce est assignée quand le pieceIndex change.
+        if (oldPlayer.pieceIndex !== newPlayer.pieceIndex) {
+          audioService.playHardDrop();
+        } else {
+          // Si c'est la même pièce, on vérifie le mouvement ou la rotation.
+          // 4. Son de Rotation
+          // Comparer les formes via JSON.stringify est un moyen simple de détecter un changement.
+          if (JSON.stringify(oldPiece.shape) !== JSON.stringify(newPiece.shape)) {
+            audioService.playRotate();
+          }
+          // 5. Son de Mouvement
+          else if (oldPiece.position.x !== newPiece.position.x) {
+            audioService.playMove();
+          }
+        }
       });
 
       // Écouteur pour la mise à jour de la liste des lobbies

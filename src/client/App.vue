@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted } from 'vue';
 import { useGameStore } from './stores/gameStore';
+import { audioService } from './services/audioService';
 
 // Le composant App.vue est la "coquille" principale de l'application.
 // C'est le meilleur endroit pour initialiser des services globaux comme le store de jeu.
@@ -12,6 +13,7 @@ const gameStore = useGameStore();
 // pendant toute la durée de vie de l'application.
 onMounted(() => {
   gameStore.initializeStore();
+  audioService.init();
 });
 </script>
 
