@@ -39,29 +39,43 @@ onMounted(() => {
   --primary-color: #FFD700; /* Jaune doré arcade */
   --border-color: #444;
   --red-pelican: #c0392b;
+  --grid-color: rgba(0, 255, 255, 0.1); /* Cyan très subtil */
+}
+
+/* --- Animation pour la grille 2D --- */
+@keyframes scroll-background {
+  from { background-position: 0 0; }
+  to { background-position: -50px -50px; } /* Défilement diagonal */
 }
 
 body {
   font-family: 'VT323', monospace;
-  font-size: 20px; /* La police pixel a besoin d'être plus grande */
+  font-size: 20px;
   background-color: var(--background-color);
   color: var(--text-color);
   margin: 0;
   padding: 0;
-
-  /* Look pixel parfait */
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: -webkit-crisp-edges;
   image-rendering: pixelated;
-  image-rendering: crisp-edges;
+
+  /* La nouvelle grille 2D appliquée à tout le corps de la page */
+  background-image:
+    repeating-linear-gradient(to right, var(--grid-color), var(--grid-color) 1px, transparent 1px, transparent 50px),
+    repeating-linear-gradient(to bottom, var(--grid-color), var(--grid-color) 1px, transparent 1px, transparent 50px);
+  background-size: 50px 50px;
+  animation: scroll-background 5s linear infinite;
 }
 
 #main-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  position: relative; /* Gardé pour la robustesse du layout, mais sans 3D */
 }
 
 header {
