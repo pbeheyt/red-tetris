@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '../stores/userStore';
 import BaseButton from '../components/ui/BaseButton.vue';
+import BaseCard from '../components/ui/BaseCard.vue';
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -21,8 +22,10 @@ const continueToMenu = () => {
 </script>
 
 <template>
-  <div class="welcome-container">
-    <h2>Bienvenue sur Red Tetris !</h2>
+  <BaseCard>
+    <template #header>
+      <h2>Bienvenue sur Red Tetris !</h2>
+    </template>
     <p>Pour commencer, veuillez entrer votre nom.</p>
     <form @submit.prevent="continueToMenu" class="name-form">
       <input
@@ -34,20 +37,10 @@ const continueToMenu = () => {
       />
       <BaseButton type="submit">Continuer</BaseButton>
     </form>
-  </div>
+  </BaseCard>
 </template>
 
 <style scoped>
-.welcome-container {
-  border: 1px solid #ccc;
-  background-color: #f9f9f9;
-  padding: 40px;
-  margin: 50px auto;
-  max-width: 500px;
-  border-radius: 8px;
-  text-align: center;
-}
-
 .name-form {
   display: flex;
   flex-direction: column;

@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '../stores/userStore';
 import { useGameStore } from '../stores/gameStore';
 import BaseButton from '../components/ui/BaseButton.vue';
+import BaseCard from '../components/ui/BaseCard.vue';
 
 const userStore = useUserStore();
 const gameStore = useGameStore();
@@ -55,8 +56,10 @@ const handleChangeName = () => {
 
 <template>
   <div class="menu-container">
-    <div class="actions-box">
-      <h2>Menu Principal</h2>
+    <BaseCard>
+      <template #header>
+        <h2>Menu Principal</h2>
+      </template>
       <div class="welcome-message">
         <p>Bonjour, <strong>{{ userStore.playerName }}</strong> !</p>
         <BaseButton @click="handleChangeName" variant="secondary" style="padding: 5px 10px; font-size: 0.8em;">Changer de nom</BaseButton>
@@ -73,10 +76,12 @@ const handleChangeName = () => {
         />
         <BaseButton type="submit" variant="info" style="padding: 15px 25px;">Créer une partie</BaseButton>
       </form>
-    </div>
+    </BaseCard>
 
-    <div class="lobby-browser">
-      <h3>Parties en attente</h3>
+    <BaseCard>
+      <template #header>
+        <h3>Parties en attente</h3>
+      </template>
       <div v-if="gameStore.lobbies.length > 0" class="lobbies-table-container">
         <table>
           <thead>
@@ -114,10 +119,12 @@ const handleChangeName = () => {
       <div v-else class="no-lobbies-message">
         <p>Aucune partie en attente pour le moment. Pourquoi ne pas en créer une ?</p>
       </div>
-    </div>
+    </BaseCard>
 
-    <div class="leaderboard">
-      <h3>🏆 Leaderboard 🏆</h3>
+    <BaseCard>
+      <template #header>
+        <h3>🏆 Leaderboard 🏆</h3>
+      </template>
       <div v-if="gameStore.leaderboard.length > 0" class="lobbies-table-container">
         <table>
           <thead>
@@ -141,7 +148,7 @@ const handleChangeName = () => {
       <div v-else class="no-lobbies-message">
         <p>Aucun score enregistré. Soyez le premier à entrer dans la légende !</p>
       </div>
-    </div>
+    </BaseCard>
   </div>
 </template>
 
@@ -161,14 +168,6 @@ const handleChangeName = () => {
   gap: 30px;
   max-width: 800px;
   margin: 20px auto;
-}
-
-.actions-box, .lobby-browser {
-  border: 1px solid #ccc;
-  background-color: #f9f9f9;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
 }
 
 .create-game-form {
@@ -228,13 +227,6 @@ th {
   color: #777;
 }
 
-.leaderboard {
-  border: 1px solid #ccc;
-  background-color: #f9f9f9;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-}
 
 .leaderboard td:first-child, .leaderboard th:first-child {
   font-weight: bold;

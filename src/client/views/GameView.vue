@@ -6,6 +6,7 @@ import { state as socketState } from '../services/socketService.js';
 import GameBoard from '../components/GameBoard.vue';
 import MultiBoardGrid from '../components/MultiBoardGrid.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
+import BaseCard from '../components/ui/BaseCard.vue';
 
 const gameStore = useGameStore();
 const route = useRoute();
@@ -98,8 +99,10 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
     </div>
 
     <!-- Écran de fin de partie -->
-    <div v-if="gameStore.gameStatus === 'finished'" class="game-over-container">
-      <h2>Partie terminée !</h2>
+    <BaseCard v-if="gameStore.gameStatus === 'finished'">
+      <template #header>
+        <h2>Partie terminée !</h2>
+      </template>
       <p class="winner-message" v-if="gameStore.gameMode !== 'solo'">Le gagnant est : <strong>{{ gameStore.gameWinner }}</strong></p>
 
       <div v-if="gameStore.gameMode === 'solo'">
@@ -113,11 +116,13 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
 
       <BaseButton @click="handleLeaveGame" variant="danger">Retourner au menu</BaseButton>
       <BaseButton v-if="gameStore.isCurrentUserHost && gameStore.playerList.length > 1" @click="handleRestartGame" variant="primary" style="margin-left: 10px;">Rejouer</BaseButton>
-    </div>
+    </BaseCard>
 
     <!-- Section Lobby -->
-    <div v-if="gameStore.gameStatus === 'lobby'" class="lobby-container">
-      <h3>En attente de joueurs...</h3>
+    <BaseCard v-if="gameStore.gameStatus === 'lobby'">
+      <template #header>
+        <h3>En attente de joueurs...</h3>
+      </template>
       <ul class="lobby-player-list">
         <li v-for="player in gameStore.playerList" :key="player.id">
           <span>{{ player.name }} {{ player.isHost ? '(Hôte)' : '' }}</span>
@@ -136,7 +141,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
         En attente d'autres joueurs...
       </p>
       <p v-else>En attente que l'hôte démarre la partie.</p>
-    </div>
+    </BaseCard>
 
     <!-- Section Jeu (pour les joueurs) -->
     <div class="game-main-area" v-if="!gameStore.isCurrentUserSpectator && (gameStore.gameStatus === 'playing' || (gameStore.gameStatus === 'finished' && gameStore.currentPlayer))">
@@ -155,8 +160,10 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
     </div>
 
     <!-- Section Spectateur -->
-    <div v-if="gameStore.isCurrentUserSpectator" class="spectator-container">
-      <h2>Mode Spectateur</h2>
+    <BaseCard v-if="gameStore.isCurrentUserSpectator">
+      <template #header>
+        <h2>Mode Spectateur</h2>
+      </template>
       <p>Vous observez la partie. Voici les participants :</p>
 
       <div class="participant-lists">
@@ -185,7 +192,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
           :container-width="containerWidth"
         />
       </div>
-    </div>
+    </BaseCard>
   </div>
 </template>
 
@@ -213,17 +220,6 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
   margin: 0;
 }
 
-
-.game-over-container {
-  border: 2px solid #ffc107;
-  background-color: #fff3cd;
-  padding: 20px;
-  margin: 20px auto;
-  max-width: 500px;
-  border-radius: 8px;
-  text-align: center;
-}
-
 .winner-message {
   font-size: 1.2em;
   margin-bottom: 20px;
@@ -233,15 +229,6 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
   margin-top: 20px;
   display: flex;
   flex-direction: column;
-}
-
-.lobby-container {
-  border: 1px solid #ccc;
-  background-color: #f9f9f9;
-  padding: 20px;
-  margin: 20px auto;
-  max-width: 400px;
-  border-radius: 8px;
 }
 
 .lobby-container ul {
@@ -270,15 +257,6 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
   display: flex;
   justify-content: space-between;
   padding: 5px 0;
-}
-
-.spectator-container {
-  border: 2px dashed #007bff;
-  background-color: #e7f3ff;
-  padding: 20px;
-  margin: 20px auto;
-  border-radius: 8px;
-  text-align: center;
 }
 
 .participant-lists {
