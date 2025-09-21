@@ -62,20 +62,23 @@ const handleChangeName = () => {
       </template>
       <div class="welcome-message">
         <p>Bonjour, <strong>{{ userStore.playerName }}</strong> !</p>
-        <BaseButton @click="handleChangeName" variant="secondary" style="padding: 5px 10px; font-size: 0.8em;">Changer de nom</BaseButton>
+        <BaseButton @click="handleChangeName" variant="secondary" class="change-name-button">Changer de nom</BaseButton>
       </div>
-      <BaseButton @click="startSoloGame" variant="success" style="padding: 15px 25px;">Mode Solo</BaseButton>
 
-      <form @submit.prevent="createMultiplayerGame" class="create-game-form">
-        <input
-          v-model="newRoomName"
-          type="text"
-          placeholder="Nom de la nouvelle partie"
-          required
-          class="room-name-input"
-        />
-        <BaseButton type="submit" variant="info" style="padding: 15px 25px;">Créer une partie</BaseButton>
-      </form>
+      <div class="main-actions">
+        <BaseButton @click="startSoloGame" variant="success">Mode Solo</BaseButton>
+
+        <form @submit.prevent="createMultiplayerGame" class="create-game-form">
+          <input
+            v-model="newRoomName"
+            type="text"
+            placeholder="Nom de la nouvelle partie"
+            required
+            class="room-name-input"
+          />
+          <BaseButton type="submit" variant="info">Créer une partie</BaseButton>
+        </form>
+      </div>
     </BaseCard>
 
     <BaseCard>
@@ -158,7 +161,27 @@ const handleChangeName = () => {
   justify-content: center;
   align-items: center;
   gap: 15px;
-  margin-bottom: 15px;
+  margin-bottom: 25px; /* Augmentation de la marge */
+}
+
+.change-name-button {
+  padding: 5px 10px;
+  font-size: 0.8em; /* Style de l'ancien bouton en ligne */
+}
+
+.main-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 350px; /* Limite la largeur pour un meilleur aspect */
+  margin: 0 auto; /* Centre le bloc d'actions */
+}
+
+/* Assure que les boutons directs et ceux dans le formulaire prennent toute la largeur */
+.main-actions > .base-button,
+.main-actions .base-button {
+  width: 100%;
+  box-sizing: border-box; /* Important pour que le padding ne casse pas la largeur */
 }
 
 
@@ -172,10 +195,8 @@ const handleChangeName = () => {
 
 .create-game-form {
   display: flex;
-  justify-content: center;
+  flex-direction: column; /* Empile l'input et le bouton */
   gap: 10px;
-  margin-top: 20px;
-  align-items: stretch;
 }
 
 .room-name-input {
