@@ -99,17 +99,24 @@ const formatDifficulty = (difficulty) => {
         </div>
 
         <div class="main-actions">
-          <BaseButton @click="startSoloGame" variant="success">Mode Solo</BaseButton>
-          <form @submit.prevent="createMultiplayerGame" class="create-game-form">
-            <input
-              v-model="newRoomName"
-              type="text"
-              placeholder="Nom de la nouvelle partie"
-              required
-              class="room-name-input"
-            />
-            <BaseButton type="submit" variant="info">Créer une partie</BaseButton>
-          </form>
+          <div class="action-panel solo-panel">
+            <h3>Mode Solo</h3>
+            <BaseButton @click="startSoloGame" variant="success">Lancer</BaseButton>
+          </div>
+          <div class="separator"></div>
+          <div class="action-panel multi-panel">
+            <h3>Multijoueur</h3>
+            <form @submit.prevent="createMultiplayerGame" class="create-game-form">
+              <input
+                v-model="newRoomName"
+                type="text"
+                placeholder="Nom de la partie"
+                required
+                class="room-name-input"
+              />
+              <BaseButton type="submit" variant="info">Créer une partie</BaseButton>
+            </form>
+          </div>
         </div>
       </BaseCard>
 
@@ -284,9 +291,35 @@ const formatDifficulty = (difficulty) => {
 
 .main-actions {
   display: flex;
+  flex-direction: row;
+  gap: 20px;
+  align-items: stretch;
+  margin-top: 20px;
+  border-top: 2px solid var(--border-color, #444);
+  padding-top: 20px;
+}
+
+.action-panel {
+  flex: 1;
+  display: flex;
   flex-direction: column;
-  gap: 15px;
   align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 0 10px;
+}
+
+.action-panel h3 {
+  margin: 0 0 10px 0;
+  color: var(--text-color);
+  text-transform: uppercase;
+  font-size: 1.1em;
+  letter-spacing: 1px;
+}
+
+.separator {
+  width: 2px;
+  background-color: var(--border-color, #444);
 }
 
 .create-game-form {
@@ -294,7 +327,8 @@ const formatDifficulty = (difficulty) => {
   flex-direction: column;
   gap: 10px;
   width: 100%;
-  max-width: 350px;
+  justify-content: center;
+  flex-grow: 1;
 }
 
 .room-name-input {
@@ -353,6 +387,17 @@ th {
 @media (max-width: 900px) {
   .menu-container {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .main-actions {
+    flex-direction: column;
+  }
+  .separator {
+    width: 80%;
+    height: 2px;
+    margin: 10px auto;
   }
 }
 </style>
