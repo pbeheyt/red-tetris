@@ -88,35 +88,34 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
 
 <template>
   <div class="game-container" ref="containerRef">
-    <div class="game-header">
-      <div>
-        <p>Partie : <strong>{{ route.params.roomName }}</strong></p>
-        <p>Joueur : <strong>{{ route.params.playerName }}</strong></p>
-        <p v-if="gameStore.gameMode === 'solo' && gameStore.gameStatus !== 'finished'">Score : <strong>{{ gameStore.currentPlayer?.score || 0 }}</strong></p>
-        <p>État : <strong :style="{ color: socketState.isConnected ? 'green' : 'red' }">{{ socketState.isConnected ? 'Connecté' : 'En cours de connexion...' }}</strong></p>
-      </div>
+    <!-- Nouvel en-tête pour le bouton Quitter -->
+    <div class="game-view-header">
       <BaseButton @click="handleLeaveGame" variant="danger">Quitter</BaseButton>
     </div>
 
-    <!-- Écran de fin de partie -->
-    <BaseCard v-if="gameStore.gameStatus === 'finished'">
-      <template #header>
-        <h2>Partie terminée !</h2>
-      </template>
-      <p class="winner-message" v-if="gameStore.gameMode !== 'solo'">Le gagnant est : <strong>{{ gameStore.gameWinner }}</strong></p>
+    <!-- Modal de fin de partie -->
+    <div class="modal-overlay" v-if="gameStore.gameStatus === 'finished'">
+      <BaseCard>
+        <template #header>
+          <h2>Partie terminée !</h2>
+        </template>
+        <p class="winner-message" v-if="gameStore.gameMode !== 'solo'">Le gagnant est : <strong>{{ gameStore.gameWinner }}</strong></p>
 
-      <div v-if="gameStore.gameMode === 'solo'">
-        <h3>Scores finaux</h3>
-        <ul class="final-scores">
-          <li v-for="player in gameStore.playerList" :key="player.id">
-            {{ player.name }}: <strong>{{ player.score }} points</strong>
-          </li>
-        </ul>
-      </div>
+        <div v-if="gameStore.gameMode === 'solo'">
+          <h3>Scores finaux</h3>
+          <ul class="final-scores">
+            <li v-for="player in gameStore.playerList" :key="player.id">
+              {{ player.name }}: <strong>{{ player.score }} points</strong>
+            </li>
+          </ul>
+        </div>
 
-      <BaseButton @click="handleLeaveGame" variant="danger">Retourner au menu</BaseButton>
-      <BaseButton v-if="gameStore.isCurrentUserHost && gameStore.playerList.length > 1" @click="handleRestartGame" variant="primary" style="margin-left: 10px;">Rejouer</BaseButton>
-    </BaseCard>
+        <div class="modal-actions">
+          <BaseButton @click="handleLeaveGame" variant="primary">Retourner au menu</BaseButton>
+          <BaseButton v-if="gameStore.isCurrentUserHost && gameStore.playerList.length > 1" @click="handleRestartGame" variant="success">Rejouer</BaseButton>
+        </div>
+      </BaseCard>
+    </div>
 
     <!-- Section Lobby -->
     <BaseCard v-if="gameStore.gameStatus === 'lobby'">
@@ -145,13 +144,33 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
 
     <!-- Section Jeu (pour les joueurs) -->
     <div class="game-main-area" v-if="!gameStore.isCurrentUserSpectator && (gameStore.gameStatus === 'playing' || (gameStore.gameStatus === 'finished' && gameStore.currentPlayer))">
-      <!-- Main board for the current player -->
-      <GameBoard
-        :board="gameStore.board"
-        :active-piece="gameStore.activePiece"
-        @player-action="handlePlayerAction"
-      />
-      <!-- Spectator boards for multiplayer -->
+      <!-- Colonne de Gauche: Panneau d'informations -->
+      <div class="game-info-panel">
+        <div class="info-block">
+          <h3>Partie</h3>
+          <p>Room: <strong>{{ route.params.roomName }}</strong></p>
+          <p>Joueur: <strong>{{ route.params.playerName }}</strong></p>
+        </div>
+        <div class="info-block">
+          <h3>Réseau</h3>
+          <p>État: <strong :style="{ color: socketState.isConnected ? 'green' : 'red' }">{{ socketState.isConnected ? 'Connecté' : '...' }}</strong></p>
+        </div>
+      </div>
+
+      <!-- Colonne Centrale: Plateau de jeu et Score -->
+      <div class="game-board-container">
+        <div class="score-display" v-if="gameStore.gameMode === 'solo'">
+          <span class="score-label">Score</span>
+          <span class="score-value">{{ gameStore.currentPlayer?.score || 0 }}</span>
+        </div>
+        <GameBoard
+          :board="gameStore.board"
+          :active-piece="gameStore.activePiece"
+          @player-action="handlePlayerAction"
+        />
+      </div>
+
+      <!-- Colonne de Droite: Adversaires -->
       <MultiBoardGrid
         v-if="(gameStore.playerList?.length || 0) > 1"
         :players="gameStore.playerList.filter(p => p.id !== gameStore.currentPlayer.id)"
@@ -201,23 +220,62 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
   margin-top: 20px;
 }
 
+.game-view-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+  height: 50px; /* Hauteur fixe pour éviter les sauts de layout */
+}
+
 .game-main-area {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
   justify-content: center;
-  align-items: flex-start;
-  gap: 20px;
+  gap: 30px;
 }
 
-.game-header {
+.game-info-panel {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 20px;
   text-align: left;
-  margin-bottom: 20px;
 }
 
-.game-header p {
-  margin: 0;
+.info-block h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 5px;
+}
+
+.info-block p {
+  margin: 0 0 8px 0;
+  word-break: break-all; /* Pour les noms de room longs */
+}
+
+.game-board-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.score-display {
+  text-align: center;
+}
+
+.score-label {
+  display: block;
+  font-size: 1.2em;
+  color: var(--text-color);
+}
+
+.score-value {
+  display: block;
+  font-size: 2.5em;
+  color: var(--primary-color);
+  line-height: 1;
 }
 
 .winner-message {
@@ -226,9 +284,26 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
 }
 
 .game-container {
-  margin-top: 20px;
   display: flex;
   flex-direction: column;
+  flex-grow: 1; /* Permet au conteneur de prendre la hauteur disponible */
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
 }
 
 .lobby-container ul {
