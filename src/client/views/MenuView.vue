@@ -69,14 +69,15 @@ const formatDifficulty = (difficulty) => {
 
 <template>
   <div class="menu-container">
-    <div class="top-section">
-      <BaseCard class="grid-card">
+    <!-- Colonne de gauche (principale) -->
+    <div class="left-column">
+      <BaseCard>
         <template #header>
           <h2>Menu Principal</h2>
         </template>
         <div class="welcome-message">
           <p>Bonjour, <strong>{{ userStore.playerName }}</strong> !</p>
-          <BaseButton @click="handleChangeName" variant="secondary" class="change-name-button">Changer de nom</BaseButton>
+          <BaseButton @click="handleChangeName" variant="secondary" class="change-name-button">Changer</BaseButton>
         </div>
 
         <div class="game-options">
@@ -99,7 +100,6 @@ const formatDifficulty = (difficulty) => {
 
         <div class="main-actions">
           <BaseButton @click="startSoloGame" variant="success">Mode Solo</BaseButton>
-
           <form @submit.prevent="createMultiplayerGame" class="create-game-form">
             <input
               v-model="newRoomName"
@@ -113,7 +113,41 @@ const formatDifficulty = (difficulty) => {
         </div>
       </BaseCard>
 
-      <BaseCard class="grid-card">
+      <BaseCard>
+        <template #header>
+          <h3>🏆 Leaderboard 🏆</h3>
+        </template>
+        <div v-if="gameStore.leaderboard.length > 0" class="lobbies-table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nom</th>
+                <th>Score</th>
+                <th>Difficulté</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(entry, index) in gameStore.leaderboard" :key="entry.id">
+                <td>{{ index + 1 }}</td>
+                <td>{{ entry.name }}</td>
+                <td>{{ entry.weightedScore }}</td>
+                <td class="difficulty-cell">{{ formatDifficulty(entry.difficulty) }}</td>
+                <td>{{ new Date(entry.date).toLocaleDateString() }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div v-else class="no-lobbies-message">
+          <p>Aucun score enregistré. Soyez le premier à entrer dans la légende !</p>
+        </div>
+      </BaseCard>
+    </div>
+
+    <!-- Colonne de droite (secondaire) -->
+    <div class="right-column">
+      <BaseCard>
         <template #header>
           <h3>Parties en attente</h3>
         </template>
@@ -156,41 +190,53 @@ const formatDifficulty = (difficulty) => {
         </div>
       </BaseCard>
     </div>
-
-    <BaseCard>
-      <template #header>
-        <h3>🏆 Leaderboard 🏆</h3>
-      </template>
-      <div v-if="gameStore.leaderboard.length > 0" class="lobbies-table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Nom</th>
-              <th>Score</th>
-              <th>Difficulté</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(entry, index) in gameStore.leaderboard" :key="entry.id">
-              <td>{{ index + 1 }}</td>
-              <td>{{ entry.name }}</td>
-              <td>{{ entry.weightedScore }}</td>
-              <td class="difficulty-cell">{{ formatDifficulty(entry.difficulty) }}</td>
-              <td>{{ new Date(entry.date).toLocaleDateString() }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div v-else class="no-lobbies-message">
-        <p>Aucun score enregistré. Soyez le premier à entrer dans la légende !</p>
-      </div>
-    </BaseCard>
   </div>
 </template>
 
 <style scoped>
+.menu-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 40px;
+  max-width: 1200px;
+  margin: 20px auto;
+  align-items: start;
+}
+
+.left-column, .right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.menu-container :deep(.base-card) {
+  margin: 0;
+  width: 100%;
+  max-width: none;
+}
+
+.welcome-message {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.welcome-message p {
+  margin: 0;
+  font-size: 1.1em;
+}
+
+.change-name-button {
+  padding: 5px 10px;
+  font-size: 0.8em;
+  border-bottom-width: 3px;
+}
+.change-name-button:active {
+  transform: translateY(2px);
+  border-bottom-width: 1px;
+}
+
 .game-options {
   margin-bottom: 25px;
   text-align: center;
@@ -227,7 +273,7 @@ const formatDifficulty = (difficulty) => {
 }
 
 .difficulty-selector input[type="radio"] {
-  display: none; /* Cache le bouton radio natif */
+  display: none;
 }
 
 .difficulty-selector label.selected {
@@ -236,47 +282,19 @@ const formatDifficulty = (difficulty) => {
   font-weight: bold;
 }
 
-.welcome-message {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 25px; /* Augmentation de la marge */
-}
-
-.change-name-button {
-  padding: 5px 10px;
-  font-size: 0.8em; /* Style de l'ancien bouton en ligne */
-}
-
 .main-actions {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  max-width: 350px; /* Limite la largeur pour un meilleur aspect */
-  margin: 0 auto; /* Centre le bloc d'actions */
-}
-
-/* Assure que les boutons directs et ceux dans le formulaire prennent toute la largeur */
-.main-actions > .base-button,
-.main-actions .base-button {
-  width: 100%;
-  box-sizing: border-box; /* Important pour que le padding ne casse pas la largeur */
-}
-
-
-.menu-container {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-  max-width: 800px;
-  margin: 20px auto;
+  gap: 15px;
+  align-items: center;
 }
 
 .create-game-form {
   display: flex;
-  flex-direction: column; /* Empile l'input et le bouton */
+  flex-direction: column;
   gap: 10px;
+  width: 100%;
+  max-width: 350px;
 }
 
 .room-name-input {
@@ -287,13 +305,11 @@ const formatDifficulty = (difficulty) => {
   border: 2px solid var(--border-color, #444);
   border-radius: 0;
   padding: 10px;
-  flex-grow: 1;
 }
 
 .room-name-input::placeholder {
   color: #777;
 }
-
 
 .lobbies-table-container {
   overflow-x: auto;
@@ -321,49 +337,21 @@ th {
   text-transform: capitalize;
 }
 
-
 .status {
   font-size: 0.9em;
   color: inherit;
 }
 
-.status-lobby {
-  color: #28a745; /* green */
-}
-
-.status-playing {
-  color: #ffc107; /* yellow */
-}
+.status-lobby { color: #28a745; }
+.status-playing { color: #ffc107; }
 
 .no-lobbies-message {
   padding: 20px;
   color: #777;
 }
 
-
-.leaderboard td:first-child, .leaderboard th:first-child {
-  font-weight: bold;
-  text-align: center;
-}
-
-.top-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  align-items: start; /* Aligne le haut des cartes */
-}
-
-/* Cible les BaseCard DANS la top-section pour ajuster leur marge */
-.grid-card {
-  margin: 0; /* Annule la marge par défaut pour un meilleur ajustement dans la grille */
-  width: 100%; /* S'assure que la carte remplit sa cellule de grille */
-  max-width: none; /* Annule la max-width pour la même raison */
-}
-
-
-/* Responsive: Sur les petits écrans, on repasse à une seule colonne */
 @media (max-width: 900px) {
-  .top-section {
+  .menu-container {
     grid-template-columns: 1fr;
   }
 }
