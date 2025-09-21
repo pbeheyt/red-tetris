@@ -11,6 +11,7 @@ const gameStore = useGameStore();
 const router = useRouter();
 
 const newRoomName = ref('');
+const selectedDifficulty = ref('normal'); // 'normal', 'fast', 'hardcore'
 
 if (!userStore.playerName) {
   router.push('/');
@@ -29,13 +30,13 @@ onUnmounted(() => {
 
 const startSoloGame = () => {
   const roomName = `solo-${Date.now()}`;
-  router.push(`/${roomName}/${userStore.playerName}?solo=true`);
+  router.push(`/${roomName}/${userStore.playerName}?solo=true&difficulty=${selectedDifficulty.value}`);
 };
 
 const createMultiplayerGame = () => {
   const roomName = newRoomName.value.trim();
   if (roomName) {
-    router.push(`/${roomName}/${userStore.playerName}`);
+    router.push(`/${roomName}/${userStore.playerName}?difficulty=${selectedDifficulty.value}`);
   } else {
     alert('Veuillez donner un nom à votre partie.');
   }
@@ -64,6 +65,24 @@ const handleChangeName = () => {
         <div class="welcome-message">
           <p>Bonjour, <strong>{{ userStore.playerName }}</strong> !</p>
           <BaseButton @click="handleChangeName" variant="secondary" class="change-name-button">Changer de nom</BaseButton>
+        </div>
+
+        <div class="game-options">
+          <h4>Vitesse de départ</h4>
+          <div class="difficulty-selector">
+            <label :class="{ selected: selectedDifficulty === 'normal' }">
+              <input type="radio" v-model="selectedDifficulty" value="normal" name="difficulty">
+              <span>Normal</span>
+            </label>
+            <label :class="{ selected: selectedDifficulty === 'fast' }">
+              <input type="radio" v-model="selectedDifficulty" value="fast" name="difficulty">
+              <span>Rapide</span>
+            </label>
+            <label :class="{ selected: selectedDifficulty === 'hardcore' }">
+              <input type="radio" v-model="selectedDifficulty" value="hardcore" name="difficulty">
+              <span>Hardcore</span>
+            </label>
+          </div>
         </div>
 
         <div class="main-actions">
@@ -158,6 +177,51 @@ const handleChangeName = () => {
 </template>
 
 <style scoped>
+.game-options {
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.game-options h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: var(--primary-color);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.difficulty-selector {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  background-color: #111;
+  padding: 5px;
+  border-radius: 5px;
+  border: 2px solid var(--border-color, #444);
+  max-width: 350px;
+  margin: 0 auto;
+}
+
+.difficulty-selector label {
+  flex: 1;
+  padding: 8px 12px;
+  cursor: pointer;
+  text-align: center;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+  color: var(--text-color);
+}
+
+.difficulty-selector input[type="radio"] {
+  display: none; /* Cache le bouton radio natif */
+}
+
+.difficulty-selector label.selected {
+  background-color: var(--primary-color);
+  color: #111;
+  font-weight: bold;
+}
+
 .welcome-message {
   display: flex;
   justify-content: center;

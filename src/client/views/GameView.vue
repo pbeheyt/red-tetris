@@ -61,9 +61,11 @@ watch(
 onMounted(() => {
   const { roomName, playerName } = route.params;
   const isSpectator = route.query.spectate === 'true';
+  const difficulty = route.query.difficulty || 'normal'; // Fallback à 'normal' si absent
+
   if (roomName && playerName) {
-    console.log(`Joining game '${roomName}' as '${playerName}' (Spectator: ${isSpectator})`);
-    gameStore.connectAndJoin(roomName, playerName, isSpectator);
+    console.log(`Joining game '${roomName}' as '${playerName}' (Spectator: ${isSpectator}, Difficulty: ${difficulty})`);
+    gameStore.connectAndJoin(roomName, playerName, { isSpectator, difficulty });
   }
 });
 

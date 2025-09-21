@@ -5,15 +5,18 @@ import {
   TETROMINO_IDS,
   BOARD_WIDTH,
   BOARD_HEIGHT,
-  PIECE_FALL_RATE_MS,
   PENALTY_CELL,
-  SCORES
+  SCORES,
+  DIFFICULTY_SETTINGS
 } from '../../shared/constants.js';
 
 /**
  * @typedef {Object} GameState
  * @property {('lobby'|'playing'|'finished')} status - L'état actuel de la partie.
  * @property {string|null} winner - Le nom du gagnant si la partie est terminée.
+ * @property {string} gameMode - Le mode de jeu ('solo' ou 'multiplayer').
+ * @property {number} level - Le niveau actuel de la partie.
+ * @property {number} linesToNextLevel - Le nombre de lignes restantes avant le prochain niveau.
  * @property {Array<PlayerState>} players - La liste des états de chaque joueur.
  * @property {Array<{id: string, name: string}>} spectators - La liste des spectateurs.
  * @property {Array<string>} events - Une liste d'événements qui viennent de se produire (ex: 'lineClear', 'gameOver').
@@ -42,16 +45,21 @@ class Game {
   /**
    * @param {Object} hostInfo - Objet contenant les infos du premier joueur ({ id, name }).
    * @param {('solo'|'multiplayer')} gameMode - The mode of the game.
+   * @param {Object} options - Options de la partie.
+   * @param {string} options.difficulty - La difficulté de départ ('normal', 'fast', 'hardcore').
    */
-  constructor(hostInfo, gameMode = 'multiplayer') {
+  constructor(hostInfo, gameMode = 'multiplayer', options = {}) {
     this.players = [new Player(hostInfo.id, hostInfo.name, true)];
     this.spectators = [];
     this.masterPieceSequence = [];
     this.gameMode = gameMode;
+    this.difficulty = options.difficulty || 'normal';
     this._generateNewBag();
     this.status = 'lobby'; // 'lobby' | 'playing' | 'finished'
     this.winner = null;
     this.events = []; // Accumulateur d'événements pour les sons/animations
+    this.level = 1;
+    this.linesToNextLevel = 10; // Default value, will be set properly in startGame
   }
 
   /**
@@ -220,6 +228,16 @@ class Game {
       }
 
       // TODO: Add score based on lines cleared.
+
+      // --- Level Progression Logic ---
+      this.linesToNextLevel -= linesCleared;
+      if (this.linesToNextLevel <= 0) {
+        this.level++;
+        // Reset the counter, carrying over any extra lines
+        const settings = DIFFICULTY_SETTINGS[this.difficulty];
+        this.linesToNextLevel = settings.linesPerLevel + this.linesToNextLevel;
+        console.log(`Level up! Game is now level ${this.level}.`);
+      }
     }
   }
 
@@ -250,6 +268,17 @@ class Game {
   }
 
   /**
+   * Calculates the piece fall speed in milliseconds based on the current game level.
+   * The speed increases as the level goes up, with a minimum cap.
+   * @returns {number} The time in milliseconds for a piece to fall one step.
+   */
+  _calculateFallSpeed() {
+    // Formula: Start at 1000ms, decrease by 50ms per level. Minimum speed is 100ms.
+    const speed = 1000 - ((this.level - 1) * 50);
+    return Math.max(100, speed);
+  }
+
+  /**
    * Fait avancer le jeu d'une unité de temps (un "tick").
    * @returns {GameState} La "photographie" complète et à jour de l'état du jeu.
    */
@@ -264,7 +293,8 @@ class Game {
         }
 
         // Check if it's time for the piece to fall
-        const isTimeToFall = now - player.lastFallTime >= PIECE_FALL_RATE_MS;
+        const fallSpeed = this._calculateFallSpeed();
+        const isTimeToFall = now - player.lastFallTime >= fallSpeed;
 
         if (player.isSoftDropping || isTimeToFall) {
           if (isTimeToFall) {
@@ -525,6 +555,8 @@ class Game {
       status: this.status,
       winner: this.winner,
       gameMode: this.gameMode,
+      level: this.level,
+      linesToNextLevel: this.linesToNextLevel,
       players: this.players.map(player => ({
         id: player.id,
         name: player.name,
@@ -617,7 +649,13 @@ class Game {
   startGame() {
     if (this.status === 'lobby') {
       this.status = 'playing';
-      console.log('Game has started!');
+
+      // Initialize level based on difficulty settings
+      const settings = DIFFICULTY_SETTINGS[this.difficulty];
+      this.level = settings.startLevel;
+      this.linesToNextLevel = settings.linesPerLevel;
+
+      console.log(`Game has started! Mode: ${this.gameMode}, Difficulty: ${this.difficulty}, Start Level: ${this.level}`);
 
       // Assign the first piece to every player
       this.players.forEach(player => {

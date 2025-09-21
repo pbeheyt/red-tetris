@@ -125,10 +125,13 @@ export const useGameStore = defineStore('game', {
      * Gère le cas où la connexion n'est pas encore établie en attendant l'événement 'connect'.
      * @param {string} roomName Le nom de la partie à rejoindre.
      * @param {string} playerName Le nom du joueur.
-     * @param {boolean} isSpectator Indique si l'utilisateur rejoint en tant que spectateur.
+     * @param {Object} options - Options de jeu supplémentaires.
+     * @param {boolean} options.isSpectator - Si l'utilisateur rejoint en tant que spectateur.
+     * @param {string} options.difficulty - La difficulté de départ choisie.
      */
-    connectAndJoin(roomName, playerName, isSpectator = false) {
-      const joinPayload = { roomName, playerName, isSpectator };
+    connectAndJoin(roomName, playerName, options = {}) {
+      const { isSpectator = false, difficulty = 'normal' } = options;
+      const joinPayload = { roomName, playerName, isSpectator, difficulty };
 
       if (socketState.isConnected) {
         console.log('GameStore: Already connected, emitting joinGame.');

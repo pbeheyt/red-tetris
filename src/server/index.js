@@ -67,14 +67,14 @@ const initEngine = (io) => {
       socket.emit('leaderboardUpdate', leaderboardData);
     });
 
-    socket.on('joinGame', ({ roomName, playerName, isSpectator }) => {
+    socket.on('joinGame', ({ roomName, playerName, isSpectator, difficulty }) => {
       // If the socket is already in a room, handle the leave process first.
       if (socket.data.roomName && socket.data.roomName !== roomName) {
         loginfo(`Socket ${socket.id} is switching rooms. Leaving '${socket.data.roomName}' first.`);
         handleParticipantLeave(socket);
       }
 
-      loginfo(`User ${playerName} (${socket.id}) trying to join room '${roomName}' as ${isSpectator ? 'spectator' : 'player'}`);
+      loginfo(`User ${playerName} (${socket.id}) trying to join room '${roomName}' as ${isSpectator ? 'spectator' : 'player'} with difficulty '${difficulty}'`);
       socket.join(roomName);
       socket.data.roomName = roomName;
 
@@ -95,7 +95,8 @@ const initEngine = (io) => {
           loginfo(`Creating new game in room '${roomName}' for host ${playerName}`);
           const hostInfo = { id: socket.id, name: playerName };
           const gameMode = roomName.startsWith('solo-') ? 'solo' : 'multiplayer';
-          game = new Game(hostInfo, gameMode);
+          const gameOptions = { difficulty: difficulty || 'normal' }; // Fallback serveur
+          game = new Game(hostInfo, gameMode, gameOptions);
           activeGames[roomName] = game;
         } else {
           loginfo(`Player ${playerName} is joining existing game in room '${roomName}'`);

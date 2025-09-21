@@ -59,3 +59,10 @@ export const SCORES = {
 // Taille minimale d'un carré (pour le rendu responsive)
 export const MIN_TILE_PX = 12;
 export const MAX_TILE_PX = 32;
+
+// Game difficulty settings
+export const DIFFICULTY_SETTINGS = {
+  normal: { startLevel: 1, linesPerLevel: 10 },
+  fast: { startLevel: 5, linesPerLevel: 10 },
+  hardcore: { startLevel: 10, linesPerLevel: 10 },
+};
