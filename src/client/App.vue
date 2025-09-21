@@ -29,13 +29,33 @@ onMounted(() => {
 </template>
 
 <style>
-/* Styles globaux - non "scoped" pour s'appliquer à toute l'application */
+/* --- Styles Globaux --- */
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+:root {
+  --background-color: #1a1a1a;
+  --background-color-card: #2c2c2c;
+  --text-color: #e0e0e0;
+  --primary-color: #FFD700; /* Jaune doré arcade */
+  --border-color: #444;
+  --red-pelican: #c0392b;
+}
+
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f0f2f5;
+  font-family: 'VT323', monospace;
+  font-size: 20px; /* La police pixel a besoin d'être plus grande */
+  background-color: var(--background-color);
+  color: var(--text-color);
   margin: 0;
   padding: 0;
-  color: #333;
+
+  /* Look pixel parfait */
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 #main-container {
@@ -49,7 +69,15 @@ header {
   margin-bottom: 20px;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  color: var(--primary-color);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
 h1 {
-  color: #c0392b; /* Rouge "Red Pelicans" */
+  color: var(--red-pelican);
+  font-size: 3em;
+  text-shadow: 4px 4px 0px #000;
 }
 </style>

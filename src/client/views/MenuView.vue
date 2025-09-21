@@ -179,11 +179,18 @@ const handleChangeName = () => {
 }
 
 .room-name-input {
-  padding: 10px;
+  font-family: inherit;
   font-size: 1em;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  background-color: #111;
+  color: var(--text-color, #e0e0e0);
+  border: 2px solid var(--border-color, #444);
+  border-radius: 0;
+  padding: 10px;
   flex-grow: 1;
+}
+
+.room-name-input::placeholder {
+  color: #777;
 }
 
 
@@ -199,19 +206,20 @@ table {
 
 th, td {
   padding: 12px 15px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border-color, #444);
   text-align: left;
   vertical-align: middle;
 }
 
 th {
-  background-color: #f2f2f2;
+  background-color: #111;
+  font-size: 1.1em;
 }
 
 
 .status {
   font-size: 0.9em;
-  color: black;
+  color: inherit;
 }
 
 .status-lobby {

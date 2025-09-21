@@ -49,9 +49,17 @@ const continueToMenu = () => {
 }
 
 .name-input {
+  font-family: inherit; /* Pour utiliser VT323 */
+  font-size: 1.1em;
+  background-color: #111;
+  color: var(--text-color, #e0e0e0);
+  border: 2px solid var(--border-color, #444);
+  border-radius: 0;
   padding: 10px;
-  font-size: 1em;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  text-align: center;
+}
+
+.name-input::placeholder {
+  color: #777;
 }
 </style>

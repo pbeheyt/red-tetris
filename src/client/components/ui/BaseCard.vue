@@ -16,32 +16,24 @@
 
 <style scoped>
 .base-card {
-  background-color: #f9f9f9;
-  border: 2px solid #1a1a1a;
-  
-  /* Ombre portée dure, style 8-bit, pour la profondeur */
-  box-shadow: 4px 4px 0px 0px #1a1a1a;
-  
-  /* Pas de coins arrondis pour un look "bloc" */
+  background-color: var(--background-color-card, #2c2c2c);
+  border: 2px solid #000;
+  box-shadow: 4px 4px 0px 0px #000;
   border-radius: 0;
-  
-  margin: 40px auto; /* Centre la carte et ajoute de l'espace vertical */
+  margin: 40px auto;
   max-width: 800px;
+  color: var(--text-color, #e0e0e0);
 }
 
 .card-header {
   padding: 10px 15px;
-  background-color: #e0e0e0;
-  border-bottom: 2px solid #1a1a1a;
+  background-color: #000;
+  border-bottom: 2px solid var(--border-color, #444);
   text-align: center;
 }
 
-/* Cible directement les éléments de titre pour un style cohérent */
 .card-header > :first-child {
   margin: 0;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
 }
 
 .card-content {

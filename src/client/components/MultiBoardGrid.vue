@@ -50,7 +50,7 @@ const cols = computed(() => {
 }
 .player-name {
   margin-bottom: 8px;
-  color: black;
+  color: inherit;
   font-size: 1em;
   font-weight: bold;
   text-align: center;
@@ -88,5 +88,3 @@ const cols = computed(() => {
   transition: height 0.05s ease-out; /* Smooth transitions for spectrum changes */
 }
 </style>
-
-
