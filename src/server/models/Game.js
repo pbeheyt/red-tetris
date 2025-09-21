@@ -376,7 +376,11 @@ class Game {
     // Save the final, calculated scores.
     if (this.gameMode === 'solo') {
       this.players.forEach(player => {
-        addScore({ name: player.name, score: player.score });
+        addScore({
+          name: player.name,
+          score: player.score,
+          difficulty: this.difficulty,
+        });
       });
     }
   }
@@ -557,6 +561,7 @@ class Game {
       gameMode: this.gameMode,
       level: this.level,
       linesToNextLevel: this.linesToNextLevel,
+      linesPerLevel: DIFFICULTY_SETTINGS[this.difficulty].linesPerLevel,
       players: this.players.map(player => ({
         id: player.id,
         name: player.name,

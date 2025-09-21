@@ -157,6 +157,14 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
           <h3>Réseau</h3>
           <p>État: <strong :style="{ color: socketState.isConnected ? 'green' : 'red' }">{{ socketState.isConnected ? 'Connecté' : '...' }}</strong></p>
         </div>
+        <div class="info-block" v-if="gameStore.gameState">
+          <h3>Niveau: {{ gameStore.gameState.level }}</h3>
+          <p>Lignes avant prochain niveau:</p>
+          <div class="progress-bar-container">
+            <div class="progress-bar" :style="{ width: `${(gameStore.gameState.linesPerLevel - gameStore.gameState.linesToNextLevel) / gameStore.gameState.linesPerLevel * 100}%` }"></div>
+            <span>{{ gameStore.gameState.linesToNextLevel }}</span>
+          </div>
+        </div>
       </div>
 
       <!-- Colonne Centrale: Plateau de jeu et Score -->
@@ -340,6 +348,30 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
   display: flex;
   justify-content: space-around;
   text-align: left;
+}
+
+.progress-bar-container {
+  width: 100%;
+  background-color: #111;
+  border: 2px solid var(--border-color);
+  height: 24px;
+  position: relative;
+  text-align: center;
+  color: white;
+}
+
+.progress-bar {
+  background-color: var(--primary-color);
+  height: 100%;
+  transition: width 0.3s ease-in-out;
+}
+
+.progress-bar-container span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  text-shadow: 1px 1px 2px black;
 }
 
 </style>

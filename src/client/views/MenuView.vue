@@ -53,6 +53,18 @@ const spectateGame = (roomName) => {
 const handleChangeName = () => {
   router.push('/');
 };
+
+const formatDifficulty = (difficulty) => {
+  switch (difficulty) {
+    case 'hardcore':
+      return 'Hardcore (x2)';
+    case 'fast':
+      return 'Rapide (x1.5)';
+    case 'normal':
+    default:
+      return 'Normal (x1)';
+  }
+};
 </script>
 
 <template>
@@ -156,6 +168,7 @@ const handleChangeName = () => {
               <th>#</th>
               <th>Nom</th>
               <th>Score</th>
+              <th>Difficulté</th>
               <th>Date</th>
             </tr>
           </thead>
@@ -163,7 +176,8 @@ const handleChangeName = () => {
             <tr v-for="(entry, index) in gameStore.leaderboard" :key="entry.id">
               <td>{{ index + 1 }}</td>
               <td>{{ entry.name }}</td>
-              <td>{{ entry.score }}</td>
+              <td>{{ entry.weightedScore }}</td>
+              <td class="difficulty-cell">{{ formatDifficulty(entry.difficulty) }}</td>
               <td>{{ new Date(entry.date).toLocaleDateString() }}</td>
             </tr>
           </tbody>
@@ -301,6 +315,10 @@ th, td {
 th {
   background-color: #111;
   font-size: 1.1em;
+}
+
+.difficulty-cell {
+  text-transform: capitalize;
 }
 
 
