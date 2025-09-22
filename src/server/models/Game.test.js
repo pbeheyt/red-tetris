@@ -130,14 +130,34 @@ describe('Game Model', () => {
       expect(player1.activePiece.position.x).toBe(4);
     });
 
-    it('should allow a piece to rotate when valid', () => {
-      player1.activePiece.type = 'T';
-      const initialShape = JSON.parse(JSON.stringify(player1.activePiece.shape));
+    it('should allow a piece to rotate when valid (by coordinates)', () => {
+      // Force a non-symmetric piece at a safe position
+      player1.activePiece = {
+        type: 'T',
+        shape: [
+          [1, 1, 1],
+          [0, 1, 0],
+        ],
+        position: { x: 4, y: 0 },
+      };
 
+      const coordsOf = (piece) => {
+        const result = [];
+        for (let py = 0; py < piece.shape.length; py++) {
+          for (let px = 0; px < piece.shape[py].length; px++) {
+            if (piece.shape[py][px]) result.push([piece.position.x + px, piece.position.y + py]);
+          }
+        }
+        return result;
+      };
+
+      const before = coordsOf(player1.activePiece);
       game.handlePlayerAction('p1', 'rotate');
+      const after = coordsOf(player1.activePiece);
 
-      // The shape should have changed after a valid rotation
-      expect(player1.activePiece.shape).not.toEqual(initialShape);
+      expect(after).not.toEqual(before);
+      expect(after.length).toBeGreaterThan(0);
+      expect(after.every(([x, y]) => x >= 0 && x < BOARD_WIDTH && y >= 0 && y < BOARD_HEIGHT)).toBe(true);
     });
 
     it('should set the soft drop flag on player for softDrop action', () => {
