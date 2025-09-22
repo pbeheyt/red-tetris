@@ -29,9 +29,12 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.1.4",
     "@vitest/coverage-v8": "^1.6.0",
+    "@pinia/testing": "^0.1.5",
+    "@vue/test-utils": "^2.4.6",
     "concurrently": "^8.2.2",
     "eslint": "^8.57.0",
     "eslint-plugin-vue": "^9.28.0",
+    "jsdom": "^24.1.1",
     "nodemon": "^3.1.10",
     "vite": "^5.4.8",
     "vitest": "^1.6.0"

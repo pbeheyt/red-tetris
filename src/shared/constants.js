@@ -34,16 +34,17 @@ export const ID_TO_TETROMINO = {
 
 // Couleurs par type (inspiré des conventions Tetris)
 export const TETROMINO_COLORS = {
-  I: '#00FFFF', // Cyan
-  O: '#FFFF00', // Yellow
-  T: '#800080', // Purple
-  S: '#00FF00', // Green
-  Z: '#FF0000', // Red
-  J: '#0000FF', // Blue
-  L: '#FFA500', // Orange
+  I: 'rgb(0, 255, 255)', // Cyan
+  O: 'rgb(255, 255, 0)', // Yellow
+  T: 'rgb(128, 0, 128)', // Purple
+  S: 'rgb(0, 255, 0)', // Green
+  Z: 'rgb(255, 0, 0)', // Red
+  J: 'rgb(0, 0, 255)', // Blue
+  L: 'rgb(255, 165, 0)', // Orange
 };
 
-export const PENALTY_COLOR = '#666666'; // Gray for penalty lines
+export const PENALTY_COLOR = 'rgb(102, 102, 102)'; // Gray for penalty lines
+export const FRAME_COLOR = 'rgb(120, 120, 120)'; // Gray for frame
 
 // Scoring system
 // https://tetris.wiki/Scoring
