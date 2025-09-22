@@ -6,11 +6,11 @@ vi.mock('../../shared/tetrominos.js', () => ({
   TETROMINOS: {
     T: {
       shape: [[0, 1, 0], [1, 1, 1], [0, 0, 0]],
-      color: '#800080',
+      color: 'rgb(128, 0, 128)',
     },
     X: { // Mock data for the invalid test case
       shape: [[1]],
-      color: '#FFFFFF',
+      color: 'rgb(255, 255, 255)',
     }
   }
 }));
@@ -22,7 +22,7 @@ describe('Piece', () => {
 
     const expectedTetromino = {
       shape: [[0, 1, 0], [1, 1, 1], [0, 0, 0]],
-      color: '#800080',
+      color: 'rgb(128, 0, 128)',
     };
 
     expect(piece.type).toBe(pieceType);

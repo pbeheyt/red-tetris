@@ -8,7 +8,8 @@ import {
   ID_TO_TETROMINO,
   TETROMINO_IDS,
   PENALTY_CELL,
-  PENALTY_COLOR
+  PENALTY_COLOR,
+  FRAME_COLOR
 } from '../../shared/constants.js';
 
 // Contrat n°3 : "Câbles d'Entrée" (Props)
@@ -102,23 +103,23 @@ const mergedGrid = computed(() => {
 });
 
 function resolveCellColor(val) {
+  const frameColor = FRAME_COLOR;
   if (!val || val === CELL_EMPTY) return 'transparent';
   if (val === PENALTY_CELL) return PENALTY_COLOR;
   if (typeof val === 'number') {
     const key = ID_TO_TETROMINO[val];
-    return (key && TETROMINO_COLORS[key]) || '#777';
+    return (key && TETROMINO_COLORS[key]) || frameColor;
   }
   if (typeof val === 'string') {
     // Allow direct CSS colors like '#787878'
     if (val.startsWith && val.startsWith('#')) return val;
-    return TETROMINO_COLORS[val] || '#777';
+    return TETROMINO_COLORS[val] || frameColor;
   }
   if (typeof val === 'object' && val.color) return val.color;
-  return '#777';
+  return frameColor;
 }
 
 // Create a framed grid with one-tile border around playfield using #787878 tiles
-const FRAME_COLOR = '#787878';
 const displayCols = computed(() => cols.value + 2);
 const displayRows = computed(() => rows.value + 2);
 const framedGrid = computed(() => {
