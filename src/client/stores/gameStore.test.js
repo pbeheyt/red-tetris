@@ -20,8 +20,20 @@ vi.mock('../services/socketService.js', () => ({
   },
 }));
 
+// Mock audio service to validate event-driven sounds
+vi.mock('../services/audioService.js', () => ({
+  audioService: {
+    playMove: vi.fn(),
+    playRotate: vi.fn(),
+    playHardDrop: vi.fn(),
+    playLineClear: vi.fn(),
+    playGameOver: vi.fn(),
+  }
+}));
+
 // On importe le service mocké APRES la configuration du mock.
 import { socketService, state as socketState } from '../services/socketService.js';
+import { audioService } from '../services/audioService.js';
 
 describe('Game Store', () => {
 
@@ -82,6 +94,41 @@ describe('Game Store', () => {
         socketState.socketId = 'socket1';
 
         expect(store.board).toEqual([]);
+    });
+
+    it('additional getters should reflect gameState correctly', () => {
+      const store = useGameStore();
+      // default without gameState
+      expect(store.gameStatus).toBe('disconnected');
+      expect(store.activePiece).toBeNull();
+      expect(store.playerList).toEqual([]);
+      expect(store.gameWinner).toBeNull();
+      expect(store.gameMode).toBe('multiplayer');
+      expect(store.isCurrentUserHost).toBe(false);
+      expect(store.isCurrentUserSpectator).toBe(false);
+
+      // with gameState
+      store.gameState = {
+        status: 'playing',
+        gameMode: 'solo',
+        winner: 'Alice',
+        players: [
+          { id: 'me', isHost: true, activePiece: { type: 'T', shape: [[1]], position: { x: 0, y: 0 } }, board: [[0]] },
+          { id: 'p2', isHost: false, board: [[0]] },
+        ],
+        spectators: [{ id: 'spec' }],
+      };
+      socketState.socketId = 'me';
+
+      expect(store.gameStatus).toBe('playing');
+      expect(store.activePiece).toEqual({ type: 'T', shape: [[1]], position: { x: 0, y: 0 } });
+      expect(store.playerList.length).toBe(2);
+      expect(store.gameWinner).toBe('Alice');
+      expect(store.gameMode).toBe('solo');
+      expect(store.isCurrentUserHost).toBe(true);
+      // Set spectator to current user
+      store.gameState.spectators = [{ id: 'me' }];
+      expect(store.isCurrentUserSpectator).toBe(true);
     });
   });
 
@@ -181,6 +228,13 @@ describe('Game Store', () => {
       expect(socketService.on).toHaveBeenCalledWith('gameStateUpdate', expect.any(Function));
     });
 
+    it('`initializeStore` should early return if already initialized', () => {
+      const store = useGameStore();
+      store.listenersRegistered = true;
+      store.initializeStore();
+      expect(socketService.connect).not.toHaveBeenCalled();
+    });
+
     it('`enterLobbyBrowser` should emit when connected', () => {
       const store = useGameStore();
       socketState.isConnected = true;
@@ -195,6 +249,12 @@ describe('Game Store', () => {
       expect(socketService.once).toHaveBeenCalledWith('connect', expect.any(Function));
     });
 
+    it('`leaveLobbyBrowser` should emit leaveLobbyBrowser', () => {
+      const store = useGameStore();
+      store.leaveLobbyBrowser();
+      expect(socketService.emit).toHaveBeenCalledWith('leaveLobbyBrowser');
+    });
+
     it('`fetchLeaderboard` should emit when connected', () => {
       const store = useGameStore();
       socketState.isConnected = true;
@@ -207,6 +267,36 @@ describe('Game Store', () => {
       socketState.isConnected = false;
       store.fetchLeaderboard();
       expect(socketService.once).toHaveBeenCalledWith('connect', expect.any(Function));
+    });
+  });
+
+  describe('registerGameListeners side-effects', () => {
+    it('should set gameState and play audio in priority order', () => {
+      const store = useGameStore();
+      store.registerGameListeners();
+      // Find the registered callbacks
+      const calls = socketService.on.mock.calls;
+      const getCb = (event) => calls.find(c => c[0] === event)?.[1];
+      const gameStateCb = getCb('gameStateUpdate');
+      const lobbiesCb = getCb('lobbiesListUpdate');
+      const leaderboardCb = getCb('leaderboardUpdate');
+
+      // 1) Assign state and play move
+      gameStateCb({ status: 'playing', players: [], spectators: [], events: ['move'] });
+      expect(store.gameState.status).toBe('playing');
+      expect(audioService.playMove).toHaveBeenCalled();
+
+      // 2) Priority: gameOver over lineClear
+      vi.clearAllMocks();
+      gameStateCb({ status: 'finished', players: [], spectators: [], events: ['lineClear', 'gameOver'] });
+      expect(audioService.playGameOver).toHaveBeenCalled();
+      expect(audioService.playLineClear).not.toHaveBeenCalled();
+
+      // 3) lobbies and leaderboard updates
+      lobbiesCb([{ roomName: 'r1', numPlayers: 2, status: 'lobby', hostName: 'h' }]);
+      expect(store.lobbies.length).toBe(1);
+      leaderboardCb([{ name: 'A', score: 10 }]);
+      expect(store.leaderboard.length).toBe(1);
     });
   });
 });
