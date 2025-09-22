@@ -123,7 +123,7 @@ describe('Game Store', () => {
 
       // Assert
       expect(socketService.emit).toHaveBeenCalledTimes(1);
-      expect(socketService.emit).toHaveBeenCalledWith('joinGame', { roomName, playerName, isSpectator: false });
+      expect(socketService.emit).toHaveBeenCalledWith('joinGame', { roomName, playerName, isSpectator: false , difficulty: 'normal'});
     });
 
     it('`connectAndJoin` should register a "once connect" listener if not connected', () => {
