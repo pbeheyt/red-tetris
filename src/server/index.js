@@ -25,7 +25,7 @@ const gameIntervals = {};
  */
 const broadcastLobbies = (io) => {
   const joinableLobbies = Object.entries(activeGames)
-    .filter(([roomName, game]) => game.status === 'lobby' || game.status === 'playing')
+    .filter(([roomName, game]) => game.status === 'lobby' || game.status === 'playing' || game.status === 'finished')
     .map(([roomName, game]) => ({
       roomName: roomName,
       hostName: game.players[0].name,
@@ -46,7 +46,7 @@ const initEngine = (io) => {
       loginfo(`Socket ${socket.id} entered lobby browser.`);
       // Envoie la liste actuelle dès qu'un utilisateur ouvre le menu
       const joinableLobbies = Object.entries(activeGames)
-        .filter(([roomName, game]) => game.status === 'lobby' || game.status === 'playing')
+        .filter(([roomName, game]) => game.status === 'lobby' || game.status === 'playing' || game.status === 'finished')
         .map(([roomName, game]) => ({
           roomName: roomName,
           hostName: game.players[0].name,
@@ -134,11 +134,13 @@ const initEngine = (io) => {
           const newState = game.tick();
           io.to(roomName).emit('gameStateUpdate', newState);
 
-          // Si le tick nous informe que la partie est terminée, on arrête la boucle.
-          if (newState.status === 'finished') {
-            loginfo(`Game in room '${roomName}' has finished. Stopping game loop.`);
+          // Stop the loop whenever the game is no longer in playing state
+          if (newState.status !== 'playing') {
+            loginfo(`Game in room '${roomName}' is no longer playing. Stopping game loop.`);
             clearInterval(gameIntervals[roomName]);
             delete gameIntervals[roomName]; // Clean up the interval ID
+            // Update the lobby browser so users see this room as joinable again
+            broadcastLobbies(io);
           }
         }, SERVER_TICK_RATE_MS);
         gameIntervals[roomName] = intervalId;
