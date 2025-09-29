@@ -24,6 +24,7 @@ RUN npm install --omit=dev
 # Copy server source code
 COPY ./src/server ./src/server
 COPY ./params.js ./params.js
+COPY ./src/shared ./src/shared
 
 # Copy client build from 'builder' stage
 COPY --from=builder /usr/src/app/dist ./dist
