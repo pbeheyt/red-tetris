@@ -125,26 +125,20 @@ const formatDifficulty = (difficulty) => {
           <h3>🏆 Leaderboard 🏆</h3>
         </template>
         <div v-if="gameStore.leaderboard.length > 0" class="lobbies-table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Nom</th>
-                <th>Score</th>
-                <th>Difficulté</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(entry, index) in gameStore.leaderboard" :key="entry.id">
-                <td>{{ index + 1 }}</td>
-                <td>{{ entry.name }}</td>
-                <td>{{ entry.weightedScore }}</td>
-                <td class="difficulty-cell">{{ formatDifficulty(entry.difficulty) }}</td>
-                <td>{{ new Date(entry.date).toLocaleDateString() }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="grid-table leaderboard-grid">
+            <div class="grid-header">#</div>
+            <div class="grid-header">Nom</div>
+            <div class="grid-header">Score</div>
+            <div class="grid-header">Difficulté</div>
+            <div class="grid-header">Date</div>
+            <template v-for="(entry, index) in gameStore.leaderboard" :key="entry.id">
+              <div>{{ index + 1 }}</div>
+              <div>{{ entry.name }}</div>
+              <div>{{ entry.weightedScore }}</div>
+              <div class="difficulty-cell">{{ formatDifficulty(entry.difficulty) }}</div>
+              <div>{{ new Date(entry.date).toLocaleDateString() }}</div>
+            </template>
+          </div>
         </div>
         <div v-else class="no-lobbies-message">
           <p>Aucun score enregistré. Soyez le premier à entrer dans la légende !</p>
@@ -159,38 +153,32 @@ const formatDifficulty = (difficulty) => {
           <h3>Parties en attente</h3>
         </template>
         <div v-if="gameStore.lobbies.length > 0" class="lobbies-table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Nom de la Partie</th>
-                <th>Hôte</th>
-                <th>Joueurs</th>
-                <th>Statut</th>
-                <th colspan="2">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="lobby in gameStore.lobbies" :key="lobby.roomName">
-                <td>{{ lobby.roomName }}</td>
-                <td>{{ lobby.hostName }}</td>
-                <td>{{ lobby.playerCount }} / 4</td>
-                <td>
-                  <span :class="['status', `status-${lobby.status}`]">{{ lobby.status }}</span>
-                </td>
-                <td>
-                  <BaseButton
-                    @click="joinGame(lobby.roomName)"
-                    variant="success"
-                    :disabled="lobby.status === 'playing'"
-                    style="padding: 8px 12px; font-size: 0.9em;"
-                  >Rejoindre</BaseButton>
-                </td>
-                <td>
-                  <BaseButton @click="spectateGame(lobby.roomName)" variant="secondary" style="padding: 8px 12px; font-size: 0.9em;">Spectateur</BaseButton>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="grid-table lobbies-grid">
+            <div class="grid-header">Nom de la Partie</div>
+            <div class="grid-header">Hôte</div>
+            <div class="grid-header">Joueurs</div>
+            <div class="grid-header">Statut</div>
+            <div class="grid-header grid-span-2">Action</div>
+            <template v-for="lobby in gameStore.lobbies" :key="lobby.roomName">
+              <div>{{ lobby.roomName }}</div>
+              <div>{{ lobby.hostName }}</div>
+              <div>{{ lobby.playerCount }} / 4</div>
+              <div>
+                <span :class="['status', `status-${lobby.status}`]">{{ lobby.status }}</span>
+              </div>
+              <div>
+                <BaseButton
+                  @click="joinGame(lobby.roomName)"
+                  variant="success"
+                  :disabled="lobby.status === 'playing'"
+                  style="padding: 8px 12px; font-size: 0.9em;"
+                >Rejoindre</BaseButton>
+              </div>
+              <div>
+                <BaseButton @click="spectateGame(lobby.roomName)" variant="secondary" style="padding: 8px 12px; font-size: 0.9em;">Spectateur</BaseButton>
+              </div>
+            </template>
+          </div>
         </div>
         <div v-else class="no-lobbies-message">
           <p>Aucune partie en attente pour le moment. Pourquoi ne pas en créer une ?</p>
@@ -349,23 +337,6 @@ const formatDifficulty = (difficulty) => {
   overflow-x: auto;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
-}
-
-th, td {
-  padding: 12px 15px;
-  border-bottom: 1px solid var(--border-color, #444);
-  text-align: left;
-  vertical-align: middle;
-}
-
-th {
-  background-color: #111;
-  font-size: 1.1em;
-}
 
 .difficulty-cell {
   text-transform: capitalize;
@@ -399,5 +370,47 @@ th {
     height: 2px;
     margin: 10px auto;
   }
+}
+.grid-table {
+  display: grid;
+  width: 100%;
+  margin-top: 15px;
+}
+
+/* Specific grid layouts */
+.leaderboard-grid {
+  grid-template-columns: 40px 1fr 1fr 1fr 1fr;
+}
+.lobbies-grid {
+  grid-template-columns: 1.5fr 1fr 0.5fr 0.5fr auto auto;
+}
+
+.grid-table > div {
+  padding: 12px 15px;
+  border-top: 1px solid var(--border-color, #444);
+  text-align: left;
+  vertical-align: middle;
+  display: flex; /* To vertically center content like buttons */
+  align-items: center;
+  word-break: break-all; /* Prevents long room names from breaking layout */
+}
+
+.grid-table > div:nth-child(-n+5) { /* Selects first 5 headers for leaderboard */
+  border-top: none;
+}
+.lobbies-grid > div:nth-child(-n+5) { /* Selects first 5 headers for lobbies */
+  border-top: none;
+}
+
+
+.grid-header {
+  background-color: #111;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+.grid-span-2 {
+  grid-column: span 2;
+  justify-content: center; /* Center the 'Action' header content */
 }
 </style>

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { socketService, state as socketState } from '../services/socketService.js';
-import { audioService } from '../services/audioService.js';
+import * as audioService from '../services/audioService.js';
 
 export const useGameStore = defineStore('game', () => {
   // --- STATE ---

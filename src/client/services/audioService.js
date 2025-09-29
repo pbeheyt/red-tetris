@@ -10,59 +10,56 @@ import gameOverSoundSrc from '../assets/sounds/game-over.mp3';
 // Un objet pour contenir les instances Audio
 const sounds = {};
 
-// L'API publique du service audio
-export const audioService = {
-  /**
-   * Initialise le service en créant et chargeant les éléments audio.
-   * Doit être appelée une seule fois au démarrage de l'application.
-   */
-  init() {
-    console.log('Initializing Audio Service...');
-    sounds.move = new Audio(moveSoundSrc);
-    sounds.rotate = new Audio(rotateSoundSrc);
-    sounds.hardDrop = new Audio(hardDropSoundSrc);
-    sounds.lineClear = new Audio(lineClearSoundSrc);
-    sounds.gameOver = new Audio(gameOverSoundSrc);
-
-    // Optionnel : Régler des propriétés globales comme le volume
-    Object.values(sounds).forEach(sound => {
-      sound.volume = 0.4; // Volume à 40%
+/**
+ * Méthode interne pour jouer un son.
+ * Réinitialise le temps du son pour permettre des lectures rapides et successives.
+ * @param {HTMLAudioElement} sound L'objet audio à jouer.
+ */
+function _playSound(sound) {
+  if (sound) {
+    sound.currentTime = 0;
+    sound.play().catch(error => {
+      // La lecture automatique a été bloquée par le navigateur.
+      // C'est normal avant la première interaction de l'utilisateur.
+      console.warn('La lecture du son a été empêchée :', error.message);
     });
-  },
+  }
+}
 
-  /**
-   * Méthode interne pour jouer un son.
-   * Réinitialise le temps du son pour permettre des lectures rapides et successives.
-   * @param {HTMLAudioElement} sound L'objet audio à jouer.
-   */
-  _playSound(sound) {
-    if (sound) {
-      sound.currentTime = 0;
-      sound.play().catch(error => {
-        // La lecture automatique a été bloquée par le navigateur.
-        // C'est normal avant la première interaction de l'utilisateur.
-        console.warn('La lecture du son a été empêchée :', error.message);
-      });
-    }
-  },
+/**
+ * Initialise le service en créant et chargeant les éléments audio.
+ * Doit être appelée une seule fois au démarrage de l'application.
+ */
+export function init() {
+  console.log('Initializing Audio Service...');
+  sounds.move = new Audio(moveSoundSrc);
+  sounds.rotate = new Audio(rotateSoundSrc);
+  sounds.hardDrop = new Audio(hardDropSoundSrc);
+  sounds.lineClear = new Audio(lineClearSoundSrc);
+  sounds.gameOver = new Audio(gameOverSoundSrc);
 
-  playMove() {
-    this._playSound(sounds.move);
-  },
+  // Optionnel : Régler des propriétés globales comme le volume
+  Object.values(sounds).forEach(sound => {
+    sound.volume = 0.4; // Volume à 40%
+  });
+}
 
-  playRotate() {
-    this._playSound(sounds.rotate);
-  },
+export function playMove() {
+  _playSound(sounds.move);
+}
 
-  playHardDrop() {
-    this._playSound(sounds.hardDrop);
-  },
+export function playRotate() {
+  _playSound(sounds.rotate);
+}
 
-  playLineClear() {
-    this._playSound(sounds.lineClear);
-  },
+export function playHardDrop() {
+  _playSound(sounds.hardDrop);
+}
 
-  playGameOver() {
-    this._playSound(sounds.gameOver);
-  },
-};
+export function playLineClear() {
+  _playSound(sounds.lineClear);
+}
+
+export function playGameOver() {
+  _playSound(sounds.gameOver);
+}

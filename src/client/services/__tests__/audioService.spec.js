@@ -8,7 +8,7 @@ class MockAudio {
 }
 vi.stubGlobal('Audio', MockAudio)
 
-import { audioService } from '../audioService.js'
+import * as audioService from '../audioService.js'
 
 describe('audioService', () => {
   beforeEach(() => {
@@ -30,5 +30,3 @@ describe('audioService', () => {
     expect(spy).toHaveBeenCalled()
   })
 })
-
-

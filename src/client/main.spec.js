@@ -13,7 +13,7 @@ vi.mock('pinia', () => ({ createPinia: vi.fn(() => 'PINIA') }))
 const routerMock = 'ROUTER'
 vi.mock('vue-router', () => ({
   createRouter: vi.fn(() => routerMock),
-  createWebHashHistory: vi.fn(() => 'HIST')
+  createWebHistory: vi.fn(() => 'HIST')
 }))
 
 // Stub components to avoid full import
@@ -37,5 +37,3 @@ describe('main.js bootstrap', () => {
     expect(appMock.mount).toHaveBeenCalledWith('#app')
   })
 })
-
-
