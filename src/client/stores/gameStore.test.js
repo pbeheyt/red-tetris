@@ -22,18 +22,16 @@ vi.mock('../services/socketService.js', () => ({
 
 // Mock audio service to validate event-driven sounds
 vi.mock('../services/audioService.js', () => ({
-  audioService: {
-    playMove: vi.fn(),
-    playRotate: vi.fn(),
-    playHardDrop: vi.fn(),
-    playLineClear: vi.fn(),
-    playGameOver: vi.fn(),
-  }
+  playMove: vi.fn(),
+  playRotate: vi.fn(),
+  playHardDrop: vi.fn(),
+  playLineClear: vi.fn(),
+  playGameOver: vi.fn(),
 }));
 
 // On importe le service mocké APRES la configuration du mock.
 import { socketService, state as socketState } from '../services/socketService.js';
-import { audioService } from '../services/audioService.js';
+import * as audioService from '../services/audioService.js';
 
 describe('Game Store', () => {
 
