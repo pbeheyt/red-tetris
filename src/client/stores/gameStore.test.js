@@ -46,6 +46,12 @@ describe('Game Store', () => {
     vi.clearAllMocks();
     socketState.isConnected = false;
     socketState.socketId = null;
+
+    // 3. Assure que l'état interne du store est propre pour chaque test
+    const store = useGameStore();
+    if (store.listenersRegistered) {
+      store.listenersRegistered.value = false;
+    }
   });
 
   describe('Getters', () => {
@@ -230,8 +236,17 @@ describe('Game Store', () => {
 
     it('`initializeStore` should early return if already initialized', () => {
       const store = useGameStore();
-      store.listenersRegistered = true;
+      
+      // 1. Appeler une première fois pour simuler l'état "déjà initialisé".
       store.initializeStore();
+      
+      // 2. Vider l'historique de l'espion après le premier appel.
+      socketService.connect.mockClear();
+      
+      // 3. Appeler une seconde fois.
+      store.initializeStore();
+      
+      // 4. Vérifier que le service n'a PAS été appelé cette seconde fois.
       expect(socketService.connect).not.toHaveBeenCalled();
     });
 
@@ -273,7 +288,8 @@ describe('Game Store', () => {
   describe('registerGameListeners side-effects', () => {
     it('should set gameState and play audio in priority order', () => {
       const store = useGameStore();
-      store.registerGameListeners();
+      // On appelle l'action publique qui, en interne, enregistre les listeners.
+      store.initializeStore();
       // Find the registered callbacks
       const calls = socketService.on.mock.calls;
       const getCb = (event) => calls.find(c => c[0] === event)?.[1];
