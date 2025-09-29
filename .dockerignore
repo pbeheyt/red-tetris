@@ -23,3 +23,6 @@ docker-compose.prod.yml
 
 # Database
 leaderboard.db
+
+# Environment files
+.env*
