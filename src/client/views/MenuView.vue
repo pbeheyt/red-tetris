@@ -170,7 +170,7 @@ const formatDifficulty = (difficulty) => {
                 <BaseButton
                   @click="joinGame(lobby.roomName)"
                   variant="success"
-                  :disabled="lobby.status === 'playing'"
+                  :disabled="lobby.status === 'playing' || lobby.playerCount >= 4"
                   style="padding: 8px 12px; font-size: 0.9em;"
                 >Rejoindre</BaseButton>
               </div>

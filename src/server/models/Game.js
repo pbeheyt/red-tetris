@@ -625,6 +625,11 @@ class Game {
       console.log(`Game is already playing. Cannot add player ${playerInfo.name}.`);
       return false;
     }
+    // Enforce a maximum of 4 players per game
+    if (this.players.length >= 4) {
+      console.log(`Game is full (4/4). Cannot add player ${playerInfo.name}.`);
+      return false;
+    }
     const newPlayer = new Player(playerInfo.id, playerInfo.name, false);
     this.players.push(newPlayer);
     console.log(`Player ${playerInfo.name} added to the game. Total players: ${this.players.length}`);
