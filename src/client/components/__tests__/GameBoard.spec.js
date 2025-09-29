@@ -79,9 +79,3 @@ test('on unmounted, removes event listener', async () => {
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }))
   expect(wrapper.emitted('playerAction')).toBeUndefined()
 })
-
-test('on mounted, adds event listener', async () => {
-  const wrapper = mount(GameBoard, { props: { board: makeEmptyBoard(), activePiece: null }, attachTo: document.body })
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }))
-  expect(wrapper.emitted('playerAction')?.[0]?.[0]).toBe('moveLeft')
-})

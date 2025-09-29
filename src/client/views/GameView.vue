@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, ref, onBeforeUnmount, watch } from 'vue';
+import { onMounted, onUnmounted, ref, onBeforeUnmount, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useGameStore } from '../stores/gameStore';
 import { state as socketState } from '../services/socketService.js';
@@ -29,6 +29,60 @@ const handleLeaveGame = () => {
   gameStore.leaveGame();
   router.push('/menu');
 };
+
+// --- Result overlay visibility states (players) ---
+// Only show to players who actually witnessed the game end locally.
+const playerOverlayClosed = ref(false);
+const playerOverlayVisible = ref(false);
+
+function closePlayerOverlay() {
+  // Close the player result overlay only (spectators have a separate card)
+  playerOverlayClosed.value = true;
+}
+
+// --- Spectator join controls ---
+const isRoomFull = computed(() => (gameStore.playerList?.length || 0) >= 4);
+
+function handleSpectatorJoin() {
+  // Guard: prevent joining when room is full
+  if (isRoomFull.value) return;
+
+  const roomName = route.params.roomName;
+  const playerName = route.params.playerName;
+  const difficulty = route.query.difficulty || 'normal';
+
+  // To avoid being registered as both spectator and player on server,
+  // leave current participation first, then re-join as a player.
+  // Also proactively close the player overlay to prevent it from showing after join.
+  playerOverlayClosed.value = true;
+  playerOverlayVisible.value = false;
+  gameStore.leaveGame();
+  gameStore.connectAndJoin(roomName, playerName, { isSpectator: false, difficulty });
+}
+
+// --- Spectator result overlay visibility ---
+// Show result overlay ONLY to spectators who witnessed the gameOver event live.
+const spectatorOverlayVisible = ref(false);
+
+watch(
+  () => gameStore.gameState?.events,
+  (events) => {
+    if (!events || events.length === 0) return;
+    if (gameStore.isCurrentUserSpectator && events.includes('gameOver')) {
+      spectatorOverlayVisible.value = true;
+    }
+  }
+);
+
+// Reset spectator overlay when leaving or when a new game starts
+watch(
+  () => gameStore.gameStatus,
+  (status) => {
+    if (status === 'playing') {
+      spectatorOverlayVisible.value = false;
+    }
+  }
+);
 
 // --- Auto-start logic for solo games ---
 let stopWatchingHost = null;
@@ -87,6 +141,41 @@ function updateWidth() {
 window.addEventListener('resize', updateWidth);
 onMounted(updateWidth);
 onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
+
+// --- Player result overlay visibility rules ---
+// 1) Show when this client (not spectator) receives gameOver event
+watch(
+  () => gameStore.gameState?.events,
+  (events) => {
+    if (!events || events.length === 0) return;
+    if (!gameStore.isCurrentUserSpectator && events.includes('gameOver')) {
+      playerOverlayVisible.value = true;
+      playerOverlayClosed.value = false;
+    }
+  }
+);
+
+// 2) Also show on local transition playing -> lobby with lastResult (end-of-game)
+watch(
+  () => gameStore.gameStatus,
+  (status, prev) => {
+    if (status === 'playing') {
+      // New game started: reset overlay states
+      playerOverlayVisible.value = false;
+      playerOverlayClosed.value = false;
+      return;
+    }
+    if (
+      prev === 'playing' &&
+      status === 'lobby' &&
+      !gameStore.isCurrentUserSpectator &&
+      gameStore.gameState?.lastResult
+    ) {
+      playerOverlayVisible.value = true;
+      playerOverlayClosed.value = false;
+    }
+  }
+);
 </script>
 
 <template>
@@ -96,13 +185,16 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
       <BaseButton @click="handleLeaveGame" variant="danger">Quitter</BaseButton>
     </div>
 
-    <!-- Modal de fin de partie -->
-    <div class="modal-overlay" v-if="gameStore.gameStatus === 'finished'">
+    <!-- Modal de fin de partie (players) -->
+    <div
+      class="modal-overlay"
+      v-if="playerOverlayVisible && !playerOverlayClosed"
+    >
       <BaseCard>
         <template #header>
           <h2>Partie terminée !</h2>
         </template>
-        <p class="winner-message" v-if="gameStore.gameMode !== 'solo'">Le gagnant est : <strong>{{ gameStore.gameWinner }}</strong></p>
+        <p class="winner-message" v-if="gameStore.gameState?.lastResult && gameStore.gameMode !== 'solo'">Le gagnant est : <strong>{{ gameStore.gameState.lastResult.winner }}</strong></p>
 
         <div v-if="gameStore.gameMode === 'solo'">
           <h3>Scores finaux</h3>
@@ -114,9 +206,31 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
         </div>
 
         <div class="modal-actions">
-          <BaseButton @click="handleLeaveGame" variant="primary">Retourner au menu</BaseButton>
-          <BaseButton v-if="gameStore.isCurrentUserHost && gameStore.playerList.length > 1" @click="handleRestartGame" variant="success">Rejouer</BaseButton>
+          <BaseButton @click="closePlayerOverlay" variant="primary">Fermer</BaseButton>
         </div>
+      </BaseCard>
+    </div>
+
+    <!-- Modal de fin de partie (spectators) -->
+    <div
+      class="modal-overlay"
+      v-if="gameStore.isCurrentUserSpectator && spectatorOverlayVisible"
+    >
+      <BaseCard>
+        <template #header>
+          <h2>Partie terminée !</h2>
+        </template>
+        <p class="winner-message" v-if="gameStore.gameState?.lastResult && gameStore.gameMode !== 'solo'">Le gagnant est : <strong>{{ gameStore.gameState.lastResult.winner }}</strong></p>
+
+        <div class="modal-actions">
+          <BaseButton @click="handleLeaveGame" variant="primary">Retourner au menu</BaseButton>
+          <BaseButton
+            @click="handleSpectatorJoin"
+            variant="success"
+            :disabled="isRoomFull"
+          >Rejoindre</BaseButton>
+        </div>
+        <p v-if="isRoomFull" style="margin-top:10px; text-align:center; color:#ccc;">La partie est complète (4/4).</p>
       </BaseCard>
     </div>
 
