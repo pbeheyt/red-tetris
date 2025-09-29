@@ -1,6 +1,7 @@
 import Player from './Player.js';
 import Piece from './Piece.js';
 import { addScore } from '../services/databaseService.js';
+import { TETROMINOS } from '../../shared/tetriminos.js';
 import {
   TETROMINO_IDS,
   BOARD_WIDTH,
@@ -562,17 +563,38 @@ class Game {
       level: this.level,
       linesToNextLevel: this.linesToNextLevel,
       linesPerLevel: DIFFICULTY_SETTINGS[this.difficulty].linesPerLevel,
-      players: this.players.map(player => ({
-        id: player.id,
-        name: player.name,
-        isHost: player.isHost,
-        hasLost: player.hasLost,
-        score: player.score,
-        board: player.board,
-        activePiece: player.activePiece,
-        spectrum: this._calculateSpectrum(player),
-        nextPieces: [],
-      })),
+      players: this.players.map(player => {
+        const nextPieces = [];
+        const nextPieceCount = 3; // How many pieces to show in advance
+        for (let i = 0; i < nextPieceCount; i++) {
+          const pieceIndex = player.pieceIndex + i;
+          // Ensure the master sequence is long enough
+          if (pieceIndex >= this.masterPieceSequence.length) {
+            this._generateNewBag();
+          }
+          const pieceType = this.masterPieceSequence[pieceIndex];
+          const tetromino = TETROMINOS[pieceType];
+          if (tetromino) {
+            nextPieces.push({
+              type: pieceType,
+              shape: tetromino.shape,
+              color: tetromino.color,
+            });
+          }
+        }
+
+        return {
+          id: player.id,
+          name: player.name,
+          isHost: player.isHost,
+          hasLost: player.hasLost,
+          score: player.score,
+          board: player.board,
+          activePiece: player.activePiece,
+          spectrum: this._calculateSpectrum(player),
+          nextPieces: nextPieces,
+        };
+      }),
       spectators: this.spectators,
       events: [...this.events], // Envoie une copie des événements
     };

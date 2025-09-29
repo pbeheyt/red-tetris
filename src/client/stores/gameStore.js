@@ -27,6 +27,9 @@ export const useGameStore = defineStore('game', () => {
   // Renvoie la pièce active du joueur actuel
   const activePiece = computed(() => currentPlayer.value?.activePiece || null);
 
+  // Renvoie la liste des prochaines pièces pour le joueur actuel
+  const nextPieces = computed(() => currentPlayer.value?.nextPieces || []);
+
   // Renvoie le statut global de la partie
   const gameStatus = computed(() => gameState.value?.status || 'disconnected');
 
@@ -249,6 +252,7 @@ export const useGameStore = defineStore('game', () => {
     currentPlayer,
     board,
     activePiece,
+    nextPieces,
     gameStatus,
     isCurrentUserHost,
     playerList,
