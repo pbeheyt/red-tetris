@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useGameStore } from '../stores/gameStore';
 import { state as socketState } from '../services/socketService.js';
 import GameBoard from '../components/GameBoard.vue';
+import NextPieces from '../components/NextPieces.vue';
 import MultiBoardGrid from '../components/MultiBoardGrid.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
 import BaseCard from '../components/ui/BaseCard.vue';
@@ -167,17 +168,20 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
         </div>
       </div>
 
-      <!-- Colonne Centrale: Plateau de jeu et Score -->
+      <!-- Colonne Centrale: Plateau de jeu, pièces suivantes et Score -->
       <div class="game-board-container">
         <div class="score-display" v-if="gameStore.gameMode === 'solo'">
           <span class="score-label">Score</span>
           <span class="score-value">{{ gameStore.currentPlayer?.score || 0 }}</span>
         </div>
-        <GameBoard
-          :board="gameStore.board"
-          :active-piece="gameStore.activePiece"
-          @player-action="handlePlayerAction"
-        />
+        <div class="main-play-area">
+          <GameBoard
+            :board="gameStore.board"
+            :active-piece="gameStore.activePiece"
+            @player-action="handlePlayerAction"
+          />
+          <NextPieces :pieces="gameStore.nextPieces" />
+        </div>
       </div>
 
       <!-- Colonne de Droite: Adversaires -->
@@ -269,6 +273,12 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
   flex-direction: column;
   align-items: center;
   gap: 10px;
+}
+
+.main-play-area {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
 }
 
 .score-display {
