@@ -58,6 +58,7 @@ class Game {
     this._generateNewBag();
     this.status = 'lobby'; // 'lobby' | 'playing' | 'finished'
     this.winner = null;
+    this.lastResult = null; // Summary of the last finished game
     this.events = []; // Accumulateur d'événements pour les sons/animations
     this.level = 1;
     this.linesToNextLevel = 10; // Default value, will be set properly in startGame
@@ -384,6 +385,15 @@ class Game {
         });
       });
     }
+    // Build last result summary and immediately reopen the room as lobby
+    this.lastResult = {
+      winner: this.winner,
+      mode: this.gameMode,
+      difficulty: this.difficulty,
+      timestamp: Date.now(),
+      players: this.players.map(p => ({ id: p.id, name: p.name, score: p.score })),
+    };
+    this.status = 'lobby';
   }
 
   /**
@@ -414,6 +424,7 @@ class Game {
     // Reset game-level properties
     this.status = 'playing';
     this.winner = null;
+    this.lastResult = null;
 
     // Reset piece sequence
     this.masterPieceSequence = [];
@@ -597,6 +608,7 @@ class Game {
       }),
       spectators: this.spectators,
       events: [...this.events], // Envoie une copie des événements
+      lastResult: this.lastResult,
     };
     this.events = []; // Vide la liste après l'envoi
     return state;
@@ -608,7 +620,8 @@ class Game {
    * @returns {boolean} - True si le joueur a été ajouté, false sinon.
    */
   addPlayer(playerInfo) {
-    if (this.status !== 'lobby') {
+    // Allow joining when the game is not actively playing (lobby or finished)
+    if (this.status === 'playing') {
       console.log(`Game is already playing. Cannot add player ${playerInfo.name}.`);
       return false;
     }
@@ -651,11 +664,9 @@ class Game {
       console.log(`Host migrated to player ${this.players[0].name} (${this.players[0].id}).`);
     }
 
-    // Si la partie était en cours et qu'il ne reste qu'un joueur, ce joueur gagne.
+    // Si la partie était en cours et qu'il ne reste qu'un joueur, terminer proprement la partie
     if (this.status === 'playing' && this.players.length === 1) {
-      this.status = 'finished';
-      this.winner = this.players[0].name;
-      console.log(`Game in finished state. Winner is ${this.winner}.`);
+      this._endGame();
     }
 
     return this.players.length;
@@ -681,11 +692,20 @@ class Game {
       const settings = DIFFICULTY_SETTINGS[this.difficulty];
       this.level = settings.startLevel;
       this.linesToNextLevel = settings.linesPerLevel;
+      this.winner = null;
+      this.lastResult = null;
+
+      // Reset the master sequence so a new round has a fresh piece stream
+      this.masterPieceSequence = [];
+      this._generateNewBag();
+      this._generateNewBag();
 
       console.log(`Game has started! Mode: ${this.gameMode}, Difficulty: ${this.difficulty}, Start Level: ${this.level}`);
 
       // Assign the first piece to every player
       this.players.forEach(player => {
+        // Ensure players start with a clean state for the new round
+        player.reset();
         const pieceType = this._getPieceTypeForPlayer(player);
         const newPiece = new Piece(pieceType);
 
