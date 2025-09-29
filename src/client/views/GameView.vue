@@ -169,19 +169,19 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
       </div>
 
       <!-- Colonne Centrale: Plateau de jeu, pièces suivantes et Score -->
-      <div class="game-board-container">
-        <div class="score-display" v-if="gameStore.gameMode === 'solo'">
-          <span class="score-label">Score</span>
-          <span class="score-value">{{ gameStore.currentPlayer?.score || 0 }}</span>
-        </div>
-        <div class="main-play-area">
+      <div class="main-play-area">
+        <div class="board-and-score">
+          <div class="score-display" v-if="gameStore.gameMode === 'solo'">
+            <span class="score-label">Score</span>
+            <span class="score-value">{{ gameStore.currentPlayer?.score || 0 }}</span>
+          </div>
           <GameBoard
             :board="gameStore.board"
             :active-piece="gameStore.activePiece"
             @player-action="handlePlayerAction"
           />
-          <NextPieces :pieces="gameStore.nextPieces" />
         </div>
+        <NextPieces :pieces="gameStore.nextPieces" />
       </div>
 
       <!-- Colonne de Droite: Adversaires -->
@@ -246,7 +246,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
   grid-template-columns: 1fr auto 1fr;
   align-items: start;
   justify-content: center;
-  gap: 30px;
+  gap: 100px;
 }
 
 .game-info-panel {
@@ -268,17 +268,17 @@ onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
   word-break: break-all; /* Pour les noms de room longs */
 }
 
-.game-board-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
 .main-play-area {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
+}
+
+.board-and-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
 .score-display {
