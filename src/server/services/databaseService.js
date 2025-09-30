@@ -2,10 +2,10 @@
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import path from 'path';
-import debug from 'debug';
+import { createLogger } from '../../shared/logger.js';
 
-const loginfo = debug('tetris:info');
-const logerror = debug('tetris:error');
+const loginfo = createLogger('tetris:info');
+const logerror = createLogger('tetris:error');
 
 // Le chemin vers le fichier de la base de données.
 // Il sera créé dans le répertoire racine du projet.

@@ -3,13 +3,13 @@ import express from 'express'
 import { Server } from 'socket.io'
 import Game from './models/Game.js'
 import { SERVER_TICK_RATE_MS } from '../shared/constants.js'
-import debug from 'debug'
+import { createLogger } from '../shared/logger.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { initializeDatabase, getLeaderboard } from './services/databaseService.js'
 
-const logerror = debug('tetris:error')
-const loginfo = debug('tetris:info')
+const logerror = createLogger('tetris:error')
+const loginfo = createLogger('tetris:info')
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)

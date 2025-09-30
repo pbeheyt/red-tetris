@@ -1,5 +1,10 @@
 // @src/client/services/audioService.js
 
+import { createLogger } from '../../shared/logger.js';
+
+const log = createLogger('audioService');
+const logWarn = createLogger('audioService:warn');
+
 // Importation des fichiers sonores. Vite gère les chemins.
 import moveSoundSrc from '../assets/sounds/move.mp3';
 import rotateSoundSrc from '../assets/sounds/rotate.mp3';
@@ -21,7 +26,7 @@ function _playSound(sound) {
     sound.play().catch(error => {
       // La lecture automatique a été bloquée par le navigateur.
       // C'est normal avant la première interaction de l'utilisateur.
-      console.warn('La lecture du son a été empêchée :', error.message);
+      logWarn('La lecture du son a été empêchée :', error.message);
     });
   }
 }
@@ -31,7 +36,7 @@ function _playSound(sound) {
  * Doit être appelée une seule fois au démarrage de l'application.
  */
 export function init() {
-  console.log('Initializing Audio Service...');
+  log('Initializing Audio Service...');
   sounds.move = new Audio(moveSoundSrc);
   sounds.rotate = new Audio(rotateSoundSrc);
   sounds.hardDrop = new Audio(hardDropSoundSrc);
