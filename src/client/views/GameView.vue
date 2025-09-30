@@ -34,12 +34,12 @@ const handleLeaveGame = () => {
 
 // --- Result overlay visibility states (players) ---
 // Only show to players who actually witnessed the game end locally.
-const playerOverlayClosed = ref(false);
-const playerOverlayVisible = ref(false);
+const playerResultOverlayClosed = ref(false);
+const showPlayerResultOverlay = ref(false);
 
-function closePlayerOverlay() {
+function closePlayerResultOverlay() {
   // Close the player result overlay only (spectators have a separate card)
-  playerOverlayClosed.value = true;
+  playerResultOverlayClosed.value = true;
 }
 
 function playAgain() {
@@ -60,8 +60,8 @@ function handleSpectatorJoin() {
   // To avoid being registered as both spectator and player on server,
   // leave current participation first, then re-join as a player.
   // Also proactively close the player overlay to prevent it from showing after join.
-  playerOverlayClosed.value = true;
-  playerOverlayVisible.value = false;
+  playerResultOverlayClosed.value = true;
+  showPlayerResultOverlay.value = false;
   gameStore.leaveGame();
   gameStore.connectAndJoin(roomName, playerName, { isSpectator: false, difficulty });
 }
@@ -168,8 +168,10 @@ watch(
   (events) => {
     if (!events || events.length === 0) return;
     if (!gameStore.isCurrentUserSpectator && events.includes('gameOver')) {
-      playerOverlayVisible.value = true;
-      playerOverlayClosed.value = false;
+      showPlayerResultOverlay.value = true;
+      playerResultOverlayClosed.value = false;
+      // La modale de résultat a la priorité sur la modale d'élimination
+      showEliminatedOverlay.value = false;
     }
   }
 );
@@ -180,8 +182,8 @@ watch(
   (status, prev) => {
     if (status === 'playing') {
       // New game started: reset overlay states
-      playerOverlayVisible.value = false;
-      playerOverlayClosed.value = false;
+      showPlayerResultOverlay.value = false;
+      playerResultOverlayClosed.value = false;
       showEliminatedOverlay.value = false;
       return;
     }
@@ -191,8 +193,10 @@ watch(
       !gameStore.isCurrentUserSpectator &&
       gameStore.gameState?.lastResult
     ) {
-      playerOverlayVisible.value = true;
-      playerOverlayClosed.value = false;
+      showPlayerResultOverlay.value = true;
+      playerResultOverlayClosed.value = false;
+      // La modale de résultat a la priorité sur la modale d'élimination
+      showEliminatedOverlay.value = false;
     }
   }
 );
@@ -225,7 +229,7 @@ watch(
     <!-- Modal de fin de partie (players) -->
     <div
       class="modal-overlay"
-      v-if="playerOverlayVisible && !playerOverlayClosed"
+      v-if="showPlayerResultOverlay && !playerResultOverlayClosed"
     >
       <BaseCard>
         <template #header>
@@ -250,7 +254,7 @@ watch(
           >Rejouer</BaseButton>
         </div>
         <div v-else class="modal-actions"> 
-          <BaseButton @click="closePlayerOverlay" variant="primary">Fermer</BaseButton>
+          <BaseButton @click="closePlayerResultOverlay" variant="primary">Fermer</BaseButton>
         </div>
       </BaseCard>
     </div>

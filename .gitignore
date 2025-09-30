@@ -4,3 +4,4 @@ dist/
 leaderboard.db
 coverage/
 .env*
+git-diff.md
