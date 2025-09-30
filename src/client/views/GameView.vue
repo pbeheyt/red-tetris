@@ -40,6 +40,10 @@ function closePlayerOverlay() {
   playerOverlayClosed.value = true;
 }
 
+function playAgain() {
+  gameStore.sendRestartGame();
+}
+
 // --- Spectator join controls ---
 const isRoomFull = computed(() => (gameStore.playerList?.length || 0) >= 4);
 
@@ -236,7 +240,14 @@ watch(
           </ul>
         </div>
 
-        <div class="modal-actions">
+        <div v-if="gameStore.gameMode == 'solo'" class="modal-actions">
+          <BaseButton @click="handleLeaveGame" variant="primary">Retourner au menu</BaseButton>
+          <BaseButton
+            @click="playAgain"
+            variant="success"
+          >Rejouer</BaseButton>
+        </div>
+        <div v-else class="modal-actions"> 
           <BaseButton @click="closePlayerOverlay" variant="primary">Fermer</BaseButton>
         </div>
       </BaseCard>

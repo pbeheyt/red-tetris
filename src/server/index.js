@@ -25,7 +25,7 @@ const gameIntervals = {};
  */
 const broadcastLobbies = (io) => {
   const joinableLobbies = Object.entries(activeGames)
-    .filter(([roomName, game]) => game.status === 'lobby' || game.status === 'playing' || game.status === 'finished')
+    .filter(([roomName, game]) => (game.status === 'lobby' || game.status === 'playing' || game.status === 'finished') && game.gameMode !== 'solo')
     .map(([roomName, game]) => ({
       roomName: roomName,
       hostName: game.players[0].name,
@@ -46,7 +46,7 @@ const initEngine = (io) => {
       loginfo(`Socket ${socket.id} entered lobby browser.`);
       // Envoie la liste actuelle dès qu'un utilisateur ouvre le menu
       const joinableLobbies = Object.entries(activeGames)
-        .filter(([roomName, game]) => game.status === 'lobby' || game.status === 'playing' || game.status === 'finished')
+        .filter(([roomName, game]) => (game.status === 'lobby' || game.status === 'playing' || game.status === 'finished') && game.gameMode !== 'solo')
         .map(([roomName, game]) => ({
           roomName: roomName,
           hostName: game.players[0].name,

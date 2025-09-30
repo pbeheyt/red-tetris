@@ -384,16 +384,17 @@ class Game {
           difficulty: this.difficulty,
         });
       });
+    } else {
+      // Build last result summary and immediately reopen the room as lobby
+      this.lastResult = {
+        winner: this.winner,
+        mode: this.gameMode,
+        difficulty: this.difficulty,
+        timestamp: Date.now(),
+        players: this.players.map(p => ({ id: p.id, name: p.name, score: p.score })),
+      };
+      this.status = 'lobby';
     }
-    // Build last result summary and immediately reopen the room as lobby
-    this.lastResult = {
-      winner: this.winner,
-      mode: this.gameMode,
-      difficulty: this.difficulty,
-      timestamp: Date.now(),
-      players: this.players.map(p => ({ id: p.id, name: p.name, score: p.score })),
-    };
-    this.status = 'lobby';
   }
 
   /**
