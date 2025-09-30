@@ -102,9 +102,9 @@ const initEngine = (io) => {
           loginfo(`Player ${playerName} is joining existing game in room '${roomName}'`);
           const added = game.addPlayer({ id: socket.id, name: playerName });
           if (!added) {
-            socket.emit('error', { message: 'La partie a déjà commencé ou est pleine.' });
-            socket.leave(roomName);
-            return;
+            // The game is full or in progress, so add the user as a spectator instead.
+            loginfo(`Game full/playing. Adding ${playerName} as spectator to room '${roomName}'`);
+            game.addSpectator({ id: socket.id, name: playerName });
           }
         }
       }
