@@ -281,6 +281,30 @@ class Game {
   }
 
   /**
+   * Helper method to assign a new piece to a player, including game over check.
+   * @param {Player} player - The player to assign a new piece to.
+   */
+  _assignNewPieceToPlayer(player) {
+    const nextPieceType = this._getPieceTypeForPlayer(player);
+    const newPiece = new Piece(nextPieceType);
+
+    // Center the new piece horizontally
+    newPiece.position.x = Math.floor(BOARD_WIDTH / 2) - Math.floor(newPiece.shape[0].length / 2);
+
+    // --- Game Over Check (Pre-spawn validation) ---
+    // If the new piece is invalid *before* being assigned (i.e., it collides at spawn), the player has lost.
+    if (!this._isValidPosition(player, newPiece)) {
+      player.hasLost = true;
+      // Clear the active piece for the lost player so it doesn't render overlapping.
+      player.activePiece = null;
+      // console.log(`Player ${player.name} has lost the game.`);
+    } else {
+      // If the position is valid, assign the new piece to the player
+      player.assignNewPiece(newPiece);
+    }
+  }
+
+  /**
    * Fait avancer le jeu d'une unité de temps (un "tick").
    * @returns {GameState} La "photographie" complète et à jour de l'état du jeu.
    */
@@ -292,6 +316,18 @@ class Game {
       this.players.forEach(player => {
         if (player.hasLost || !player.activePiece) {
           return; // Skip players who have lost or have no piece
+        }
+        if (!player.activePiece) {
+            // This player needs a piece, typically after a game over or initial spawn.
+            // If they don't have one, try to give them one.
+            this._assignNewPieceToPlayer(player);
+            if (player.hasLost) { // Check if assigning the piece immediately caused a loss
+                const activePlayers = this.players.filter(p => !p.hasLost);
+                if (activePlayers.length <= 1) {
+                    this._endGame();
+                }
+                return;
+            }
         }
 
         // Check if it's time for the piece to fall
@@ -307,6 +343,7 @@ class Game {
           }
 
           const piece = player.activePiece;
+          // Create a temporary piece to test movement
           const testPiece = new Piece(piece.type);
           testPiece.shape = piece.shape;
           testPiece.position = { ...piece.position };
@@ -318,29 +355,14 @@ class Game {
           } else {
             // If not valid, the piece has landed.
             this._lockPiece(player);
+            // Now, try to assign a new piece. This is where the game-over condition should be checked.
+            this._assignNewPieceToPlayer(player);
 
-            // Get the next piece from the master sequence for the player
-            const nextPieceType = this._getPieceTypeForPlayer(player);
-            const newPiece = new Piece(nextPieceType);
-
-            // Center the new piece horizontally
-            newPiece.position.x = Math.floor(BOARD_WIDTH / 2) - Math.floor(newPiece.shape[0].length / 2);
-
-            // --- Game Over Check (Pre-spawn validation) ---
-            // If the new piece is invalid *before* being assigned, the player has lost.
-            if (!this._isValidPosition(player, newPiece)) {
-              player.hasLost = true;
-              // Clear the active piece for the lost player so it doesn't render overlapping.
-              player.activePiece = null;
-              // console.log(`Player ${player.name} has lost the game.`);
-
+            if (player.hasLost) {
               const activePlayers = this.players.filter(p => !p.hasLost);
               if (activePlayers.length <= 1) {
                 this._endGame();
               }
-            } else {
-              // If the position is valid, assign the new piece to the player
-              player.assignNewPiece(newPiece);
             }
           }
           // After a soft drop move, reset the flag. The client must send the action continuously.
@@ -435,10 +457,7 @@ class Game {
     // Reset each player
     this.players.forEach(player => {
       player.reset();
-      const firstPieceType = this._getPieceTypeForPlayer(player);
-      const newPiece = new Piece(firstPieceType);
-      newPiece.position.x = Math.floor(BOARD_WIDTH / 2) - Math.floor(newPiece.shape[0].length / 2);
-      player.assignNewPiece(newPiece);
+      this._assignNewPieceToPlayer(player);
     });
 
     // console.log('Game has been restarted!');
@@ -534,10 +553,16 @@ class Game {
 
         // Lock the piece and get a new one immediately
         this._lockPiece(player);
-        const nextPieceType = this._getPieceTypeForPlayer(player);
-        const newPiece = new Piece(nextPieceType);
-        newPiece.position.x = Math.floor(BOARD_WIDTH / 2) - Math.floor(newPiece.shape[0].length / 2);
-        player.assignNewPiece(newPiece);
+        // Immediately try to assign a new piece and check for game over
+        this._assignNewPieceToPlayer(player);
+
+        // Check for game over *right here* after the hard drop and new piece assignment
+        if (player.hasLost) {
+          const activePlayers = this.players.filter(p => !p.hasLost);
+          if (activePlayers.length <= 1) {
+            this._endGame();
+          }
+        }
 
         // Since the state is immediately and drastically changed, we can return early
         // The regular validation path isn't needed for hard drop.
@@ -712,13 +737,7 @@ class Game {
       this.players.forEach(player => {
         // Ensure players start with a clean state for the new round
         player.reset();
-        const pieceType = this._getPieceTypeForPlayer(player);
-        const newPiece = new Piece(pieceType);
-
-        // Center the piece horizontally on the board
-        newPiece.position.x = Math.floor(BOARD_WIDTH / 2) - Math.floor(newPiece.shape[0].length / 2);
-
-        player.assignNewPiece(newPiece);
+        this._assignNewPieceToPlayer(player);
       });
     }
   }
