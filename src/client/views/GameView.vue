@@ -314,7 +314,7 @@ watch(
         <div class="info-block">
           <h3>Partie</h3>
           <p>Room: <strong>{{ route.params.roomName }}</strong></p>
-          <p>Joueur: <strong>{{ route.params.playerName }}</strong></p>
+          <p>Joueur: <strong>{{ gameStore.currentPlayer.name }}</strong></p>
         </div>
         <div class="info-block">
           <h3>Réseau</h3>
