@@ -64,6 +64,6 @@ export const MAX_TILE_PX = 32;
 // Game difficulty settings
 export const DIFFICULTY_SETTINGS = {
   normal: { startLevel: 1, linesPerLevel: 5 },
-  fast: { startLevel: 5, linesPerLevel: 5 },
-  hardcore: { startLevel: 10, linesPerLevel: 5 },
+  fast: { startLevel: 8, linesPerLevel: 5 },
+  hardcore: { startLevel: 15, linesPerLevel: 5 },
 };
