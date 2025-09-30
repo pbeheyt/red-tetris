@@ -382,7 +382,7 @@ const formatDifficulty = (difficulty) => {
   grid-template-columns: 40px 1fr 1fr 1fr 1fr;
 }
 .lobbies-grid {
-  grid-template-columns: 1.5fr 1fr 0.5fr 0.5fr auto auto;
+  grid-template-columns: minmax(120px, 1.5fr) 1fr 0.5fr 0.5fr auto auto;
 }
 
 .grid-table > div {
@@ -392,7 +392,7 @@ const formatDifficulty = (difficulty) => {
   vertical-align: middle;
   display: flex; /* To vertically center content like buttons */
   align-items: center;
-  word-break: break-all; /* Prevents long room names from breaking layout */
+  overflow-wrap: break-word; /* Prevents long room names from breaking layout */
 }
 
 .grid-table > div:nth-child(-n+5) { /* Selects first 5 headers for leaderboard */
