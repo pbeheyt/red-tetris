@@ -142,6 +142,19 @@ window.addEventListener('resize', updateWidth);
 onMounted(updateWidth);
 onBeforeUnmount(() => window.removeEventListener('resize', updateWidth));
 
+// --- Player elimination overlay visibility ---
+const showEliminatedOverlay = ref(false);
+watch(
+  () => gameStore.currentPlayer?.hasLost,
+  (hasLost, prevHasLost) => {
+    // Affiche le modal uniquement lors du passage de false à true.
+    if (hasLost && !prevHasLost) {
+      showEliminatedOverlay.value = true;
+    }
+  }
+);
+
+
 // --- Player result overlay visibility rules ---
 // 1) Show when this client (not spectator) receives gameOver event
 watch(
@@ -163,6 +176,7 @@ watch(
       // New game started: reset overlay states
       playerOverlayVisible.value = false;
       playerOverlayClosed.value = false;
+      showEliminatedOverlay.value = false;
       return;
     }
     if (
@@ -183,6 +197,23 @@ watch(
     <!-- Nouvel en-tête pour le bouton Quitter -->
     <div class="game-view-header">
       <BaseButton @click="handleLeaveGame" variant="danger">Quitter</BaseButton>
+    </div>
+
+    <!-- Modal d'élimination (pour le joueur courant) -->
+    <div
+      class="modal-overlay"
+      v-if="showEliminatedOverlay"
+    >
+      <BaseCard>
+        <template #header>
+          <h2>Vous avez perdu !</h2>
+        </template>
+        <p>Vous avez été éliminé(e) de la partie.</p>
+        <p>Vous pouvez continuer à observer la partie jusqu'à la fin.</p>
+        <div class="modal-actions">
+          <BaseButton @click="showEliminatedOverlay = false" variant="primary">Fermer</BaseButton>
+        </div>
+      </BaseCard>
     </div>
 
     <!-- Modal de fin de partie (players) -->
