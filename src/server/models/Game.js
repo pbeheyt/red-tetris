@@ -656,6 +656,18 @@ class Game {
       // console.log(`Game is full (4/4). Cannot add player ${playerInfo.name}.`);
       return false;
     }
+    if (this.players.filter((p) => p.name === playerInfo.name)) {
+      let finalPlayerName = playerInfo.name;
+      let suffix = 1;
+      let nameExists = this.players.filter(p => p.name === finalPlayerName).length > 0;
+      while (nameExists) {
+        suffix++;
+        finalPlayerName = `${playerInfo.name} (${suffix})`;
+        nameExists = this.players.filter(p => p.name === finalPlayerName).length > 0;
+      }
+      playerInfo.name = finalPlayerName;
+    }
+    
     const newPlayer = new Player(playerInfo.id, playerInfo.name, false);
     this.players.push(newPlayer);
     // console.log(`Player ${playerInfo.name} added to the game. Total players: ${this.players.length}`);
