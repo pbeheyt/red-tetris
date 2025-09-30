@@ -2,6 +2,10 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { socketService, state as socketState } from '../services/socketService.js';
 import * as audioService from '../services/audioService.js';
+import { createLogger } from '../../shared/logger.js';
+
+const log = createLogger('gameStore');
+const logWarn = createLogger('gameStore:warn');
 
 export const useGameStore = defineStore('game', () => {
   // --- STATE ---
@@ -104,7 +108,7 @@ export const useGameStore = defineStore('game', () => {
     });
 
     listenersRegistered.value = true;
-    console.log('GameStore: Listeners registered.');
+    log('Listeners registered.');
   }
 
   /**
@@ -113,10 +117,10 @@ export const useGameStore = defineStore('game', () => {
    */
   function initializeStore() {
     if (socketState.isConnected || listenersRegistered.value) {
-      console.log('Store already initialized.');
+      log('Store already initialized.');
       return;
     }
-    console.log('Initializing GameStore: Connecting and registering listeners...');
+    log('Initializing GameStore: Connecting and registering listeners...');
     registerGameListeners();
     socketService.connect();
   }
@@ -135,12 +139,12 @@ export const useGameStore = defineStore('game', () => {
     const joinPayload = { roomName, playerName, isSpectator, difficulty };
 
     if (socketState.isConnected) {
-      console.log('GameStore: Already connected, emitting joinGame.');
+      log('Already connected, emitting joinGame.');
       socketService.emit('joinGame', joinPayload);
     } else {
-      console.log('GameStore: Not connected. Queuing joinGame until connect event.');
+      log('Not connected. Queuing joinGame until connect event.');
       socketService.once('connect', () => {
-        console.log('GameStore: Connect event received, now emitting joinGame.');
+        log('Connect event received, now emitting joinGame.');
         socketService.emit('joinGame', joinPayload);
       });
     }
@@ -152,7 +156,7 @@ export const useGameStore = defineStore('game', () => {
    */
   function sendPlayerAction(action) {
     if (!socketState.isConnected) {
-      console.warn("Impossible d'envoyer l'action : non connecté.");
+      logWarn("Impossible d'envoyer l'action : non connecté.");
       return;
     }
     socketService.emit('playerAction', action);
@@ -163,7 +167,7 @@ export const useGameStore = defineStore('game', () => {
    */
   function sendStartGame() {
     if (!socketState.isConnected) {
-      console.warn("Impossible de démarrer la partie : non connecté.");
+      logWarn("Impossible de démarrer la partie : non connecté.");
       return;
     }
     socketService.emit('startGame');
@@ -174,7 +178,7 @@ export const useGameStore = defineStore('game', () => {
    */
   function sendRestartGame() {
     if (!socketState.isConnected) {
-      console.warn("Cannot restart game: not connected.");
+      logWarn("Cannot restart game: not connected.");
       return;
     }
     socketService.emit('restartGame');
@@ -210,12 +214,12 @@ export const useGameStore = defineStore('game', () => {
    */
   function enterLobbyBrowser() {
     if (socketState.isConnected) {
-      console.log('GameStore: Already connected, emitting enterLobbyBrowser.');
+      log('Already connected, emitting enterLobbyBrowser.');
       socketService.emit('enterLobbyBrowser');
     } else {
-      console.log('GameStore: Not connected. Queuing enterLobbyBrowser until connect event.');
+      log('Not connected. Queuing enterLobbyBrowser until connect event.');
       socketService.once('connect', () => {
-        console.log('GameStore: Connect event received, now emitting enterLobbyBrowser.');
+        log('Connect event received, now emitting enterLobbyBrowser.');
         socketService.emit('enterLobbyBrowser');
       });
     }

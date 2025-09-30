@@ -1,5 +1,8 @@
 import { reactive } from 'vue';
 import { io } from 'socket.io-client';
+import { createLogger } from '../../shared/logger.js';
+
+const log = createLogger('socketService');
 
 /**
  * L'état réactif du service, accessible par toute l'application.
@@ -17,13 +20,13 @@ const socket = io({
 
 // Les écouteurs fondamentaux qui mettent à jour l'état réactif.
 socket.on('connect', () => {
-  console.log(`Socket Service: Connected with ID ${socket.id}`);
+  log(`Connected with ID ${socket.id}`);
   state.isConnected = true;
   state.socketId = socket.id;
 });
 
 socket.on('disconnect', () => {
-  console.log('Socket Service: Disconnected');
+  log('Disconnected');
   state.isConnected = false;
   state.socketId = null;
 });

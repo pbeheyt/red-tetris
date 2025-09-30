@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, onUnmounted, ref, onBeforeUnmount, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { createLogger } from '../../shared/logger.js';
 import { useGameStore } from '../stores/gameStore';
 import { state as socketState } from '../services/socketService.js';
 import GameBoard from '../components/GameBoard.vue';
@@ -9,6 +10,7 @@ import MultiBoardGrid from '../components/MultiBoardGrid.vue';
 import BaseButton from '../components/ui/BaseButton.vue';
 import BaseCard from '../components/ui/BaseCard.vue';
 
+const log = createLogger('GameView');
 const gameStore = useGameStore();
 const route = useRoute();
 const router = useRouter();
@@ -92,7 +94,7 @@ if (route.query.solo === 'true') {
     () => gameStore.isCurrentUserHost,
     (isHost) => {
       if (isHost) {
-        console.log('Auto-starting solo game...');
+        log('Auto-starting solo game...');
         gameStore.sendStartGame();
         if (stopWatchingHost) stopWatchingHost(); // Stop watching once the job is done.
       }
@@ -105,7 +107,7 @@ if (route.query.solo === 'true') {
 watch(
   () => [gameStore.gameStatus, gameStore.isCurrentUserSpectator],
   ([status, isSpectator]) => {
-    console.log(`[Spectator Debug] Status: ${status}, IsSpectator: ${isSpectator}`);
+    log(`[Spectator Debug] Status: ${status}, IsSpectator: ${isSpectator}`);
   }
 );
 // ----------------------------------------
@@ -119,7 +121,7 @@ onMounted(() => {
   const difficulty = route.query.difficulty || 'normal'; // Fallback à 'normal' si absent
 
   if (roomName && playerName) {
-    console.log(`Joining game '${roomName}' as '${playerName}' (Spectator: ${isSpectator}, Difficulty: ${difficulty})`);
+    log(`Joining game '${roomName}' as '${playerName}' (Spectator: ${isSpectator}, Difficulty: ${difficulty})`);
     gameStore.connectAndJoin(roomName, playerName, { isSpectator, difficulty });
   }
 });

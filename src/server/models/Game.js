@@ -88,7 +88,7 @@ class Game {
     // If the player is about to need a piece that doesn't exist yet, generate a new bag.
     if (player.pieceIndex >= this.masterPieceSequence.length) {
       this._generateNewBag();
-      console.log('Master piece sequence extended. New length:', this.masterPieceSequence.length);
+      // console.log('Master piece sequence extended. New length:', this.masterPieceSequence.length);
     }
 
     const pieceType = this.masterPieceSequence[player.pieceIndex];
@@ -193,7 +193,7 @@ class Game {
 
     if (linesCleared > 0) {
       this.events.push('lineClear');
-      console.log(`Player ${player.name} cleared ${linesCleared} lines.`);
+      // console.log(`Player ${player.name} cleared ${linesCleared} lines.`);
       // Add new empty rows at the top of the board for each line cleared
       for (let i = 0; i < linesCleared; i++) {
         newBoard.unshift(Array(BOARD_WIDTH).fill(0));
@@ -238,7 +238,7 @@ class Game {
         // Reset the counter, carrying over any extra lines
         const settings = DIFFICULTY_SETTINGS[this.difficulty];
         this.linesToNextLevel = settings.linesPerLevel + this.linesToNextLevel;
-        console.log(`Level up! Game is now level ${this.level}.`);
+        // console.log(`Level up! Game is now level ${this.level}.`);
       }
     }
   }
@@ -249,7 +249,7 @@ class Game {
    * @param {number} lineCount - The number of penalty lines to add.
    */
   _addPenaltyLines(player, lineCount) {
-    console.log(`Sending ${lineCount} penalty lines to player ${player.name}`);
+    // console.log(`Sending ${lineCount} penalty lines to player ${player.name}`);
     for (let i = 0; i < lineCount; i++) {
       // Remove the top line to make space
       player.board.shift();
@@ -332,7 +332,7 @@ class Game {
               player.hasLost = true;
               // Clear the active piece for the lost player so it doesn't render overlapping.
               player.activePiece = null;
-              console.log(`Player ${player.name} has lost the game.`);
+              // console.log(`Player ${player.name} has lost the game.`);
 
               const activePlayers = this.players.filter(p => !p.hasLost);
               if (activePlayers.length <= 1) {
@@ -373,7 +373,7 @@ class Game {
       }
     }
 
-    console.log(`Game finished. Winner: ${this.winner}. Saving scores...`);
+    // console.log(`Game finished. Winner: ${this.winner}. Saving scores...`);
 
     // Save the final, calculated scores.
     if (this.gameMode === 'solo') {
@@ -440,7 +440,7 @@ class Game {
       player.assignNewPiece(newPiece);
     });
 
-    console.log('Game has been restarted!');
+    // console.log('Game has been restarted!');
   }
 
   /**
@@ -622,17 +622,17 @@ class Game {
   addPlayer(playerInfo) {
     // Allow joining when the game is not actively playing (lobby or finished)
     if (this.status === 'playing') {
-      console.log(`Game is already playing. Cannot add player ${playerInfo.name}.`);
+      // console.log(`Game is already playing. Cannot add player ${playerInfo.name}.`);
       return false;
     }
     // Enforce a maximum of 4 players per game
     if (this.players.length >= 4) {
-      console.log(`Game is full (4/4). Cannot add player ${playerInfo.name}.`);
+      // console.log(`Game is full (4/4). Cannot add player ${playerInfo.name}.`);
       return false;
     }
     const newPlayer = new Player(playerInfo.id, playerInfo.name, false);
     this.players.push(newPlayer);
-    console.log(`Player ${playerInfo.name} added to the game. Total players: ${this.players.length}`);
+    // console.log(`Player ${playerInfo.name} added to the game. Total players: ${this.players.length}`);
     return true;
   }
 
@@ -644,7 +644,7 @@ class Game {
   addSpectator(spectatorInfo) {
     if (!this.spectators.some(s => s.id === spectatorInfo.id)) {
       this.spectators.push({ id: spectatorInfo.id, name: spectatorInfo.name });
-      console.log(`Spectator ${spectatorInfo.name} added. Total spectators: ${this.spectators.length}`);
+      // console.log(`Spectator ${spectatorInfo.name} added. Total spectators: ${this.spectators.length}`);
     }
     return true;
   }
@@ -661,12 +661,12 @@ class Game {
     const wasHost = playerToRemove.isHost;
 
     this.players = this.players.filter(p => p.id !== playerId);
-    console.log(`Player ${playerId} removed. Total players: ${this.players.length}`);
+    // console.log(`Player ${playerId} removed. Total players: ${this.players.length}`);
 
     // Si l'hôte est parti et qu'il reste des joueurs, le plus ancien devient le nouvel hôte.
     if (wasHost && this.players.length > 0) {
       this.players[0].isHost = true;
-      console.log(`Host migrated to player ${this.players[0].name} (${this.players[0].id}).`);
+      // console.log(`Host migrated to player ${this.players[0].name} (${this.players[0].id}).`);
     }
 
     // Si la partie était en cours et qu'il ne reste qu'un joueur, terminer proprement la partie
@@ -683,7 +683,7 @@ class Game {
    */
   removeSpectator(spectatorId) {
     this.spectators = this.spectators.filter(s => s.id !== spectatorId);
-    console.log(`Spectator ${spectatorId} removed. Total spectators: ${this.spectators.length}`);
+    // console.log(`Spectator ${spectatorId} removed. Total spectators: ${this.spectators.length}`);
   }
 
   /**
@@ -705,7 +705,7 @@ class Game {
       this._generateNewBag();
       this._generateNewBag();
 
-      console.log(`Game has started! Mode: ${this.gameMode}, Difficulty: ${this.difficulty}, Start Level: ${this.level}`);
+      // console.log(`Game has started! Mode: ${this.gameMode}, Difficulty: ${this.difficulty}, Start Level: ${this.level}`);
 
       // Assign the first piece to every player
       this.players.forEach(player => {
