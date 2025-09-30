@@ -42,11 +42,11 @@ help:
 # --- Development ---
 dev:
 	@echo "Starting development environment..."
-	$(COMPOSE) up
+	$(COMPOSE) up --remove-orphans
 
 dev-d:
 	@echo "Starting development environment (detached)..."
-	$(COMPOSE) up -d
+	$(COMPOSE) up -d --remove-orphans
 
 dev-build:
 	@echo "Building dev image..."
@@ -102,11 +102,11 @@ prod-build-nc:
 
 prod-up: build
 	@echo "Starting production environment..."
-	$(COMPOSE_PROD) up
+	$(COMPOSE_PROD) up --remove-orphans
 
 prod-up-d: build
 	@echo "Starting production environment (detached)..."
-	$(COMPOSE_PROD) up -d
+	$(COMPOSE_PROD) up -d --remove-orphans
 
 prod-down:
 	@echo "Stopping production environment..."
