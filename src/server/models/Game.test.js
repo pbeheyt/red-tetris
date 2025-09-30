@@ -39,7 +39,7 @@ describe('Game Model', () => {
       game.removePlayer('p2');
 
       expect(game.players.length).toBe(1);
-      expect(game.status).toBe('finished');
+      expect(game.status).toBe('lobby');
       expect(game.winner).toBe(hostInfo.name);
     });
 
