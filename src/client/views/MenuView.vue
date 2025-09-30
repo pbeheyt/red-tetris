@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '../stores/userStore';
 import { useGameStore } from '../stores/gameStore';
@@ -65,6 +65,14 @@ const formatDifficulty = (difficulty) => {
       return 'Normal (x1)';
   }
 };
+
+// Computed property to get the top 5 leaderboard entries
+const top5Leaderboard = computed(() => {
+  // Sort by weightedScore in descending order and take the top 5
+  return [...gameStore.leaderboard]
+    .sort((a, b) => b.weightedScore - a.weightedScore)
+    .slice(0, 5);
+});
 </script>
 
 <template>
@@ -119,19 +127,20 @@ const formatDifficulty = (difficulty) => {
           </div>
         </div>
       </BaseCard>
-
+    </div>
+    <div class="right-column">
       <BaseCard>
         <template #header>
           <h3>🏆 Leaderboard 🏆</h3>
         </template>
-        <div v-if="gameStore.leaderboard.length > 0" class="lobbies-table-container">
+        <div v-if="top5Leaderboard.length > 0" class="lobbies-table-container">
           <div class="grid-table leaderboard-grid">
             <div class="grid-header">#</div>
             <div class="grid-header">Nom</div>
             <div class="grid-header">Score</div>
             <div class="grid-header">Difficulté</div>
             <div class="grid-header">Date</div>
-            <template v-for="(entry, index) in gameStore.leaderboard" :key="entry.id">
+            <template v-for="(entry, index) in top5Leaderboard" :key="entry.id">
               <div>{{ index + 1 }}</div>
               <div>{{ entry.name }}</div>
               <div>{{ entry.weightedScore }}</div>
@@ -147,7 +156,7 @@ const formatDifficulty = (difficulty) => {
     </div>
 
     <!-- Colonne de droite (secondaire) -->
-    <div class="right-column">
+    <div class="bottom-column">
       <BaseCard>
         <template #header>
           <h3>Parties en attente</h3>
@@ -192,16 +201,44 @@ const formatDifficulty = (difficulty) => {
 .menu-container {
   display: grid;
   grid-template-columns: 2fr 1fr;
+  grid-template-areas:
+    "left right"
+    "bottom bottom";
   gap: 40px;
   max-width: 1200px;
   margin: 20px auto;
   align-items: start;
 }
 
-.left-column, .right-column {
+@media (max-width: 1024px) {
+  .menu-container {
+    grid-template-areas:
+    "left"
+    "bottom"
+    "right";
+    grid-template-columns: 1fr;
+  }
+}
+
+.left-column {
+  grid-area: left;
   display: flex;
   flex-direction: column;
   gap: 40px;
+  /* grid-column: 1 / 2; */
+}
+.right-column {
+  grid-area: right;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  /* grid-column: 1 / 2; */
+}
+
+.bottom-column {
+  grid-area: bottom;
+  width: auto;
+  /* grid-column: 1; */
 }
 
 .menu-container :deep(.base-card) {
@@ -353,12 +390,6 @@ const formatDifficulty = (difficulty) => {
 .no-lobbies-message {
   padding: 20px;
   color: #777;
-}
-
-@media (max-width: 900px) {
-  .menu-container {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 600px) {
