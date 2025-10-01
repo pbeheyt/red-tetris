@@ -24,37 +24,16 @@ export async function initializeDatabase() {
       driver: sqlite3.Database
     });
 
-    await db.exec('PRAGMA user_version;'); // Check schema version
-    const { user_version } = await db.get('PRAGMA user_version;');
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS leaderboard (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        score INTEGER NOT NULL,
+        difficulty TEXT DEFAULT 'normal',
+        date DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-    if (user_version < 1) {
-      loginfo('Updating database schema to version 1...');
-      await db.exec(`
-        CREATE TABLE IF NOT EXISTS leaderboard_v1 (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          score INTEGER NOT NULL,
-          difficulty TEXT DEFAULT 'normal',
-          date DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-      `);
-      // Try to migrate data, ignore if old table doesn't exist
-      await db.exec('INSERT INTO leaderboard_v1 (name, score, date) SELECT name, score, date FROM leaderboard;').catch(() => {});
-      await db.exec('DROP TABLE IF EXISTS leaderboard;');
-      await db.exec('ALTER TABLE leaderboard_v1 RENAME TO leaderboard;');
-      await db.exec('PRAGMA user_version = 1;');
-      loginfo('Database schema updated.');
-    } else {
-       await db.exec(`
-        CREATE TABLE IF NOT EXISTS leaderboard (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          score INTEGER NOT NULL,
-          difficulty TEXT DEFAULT 'normal',
-          date DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
-    }
     loginfo('Database initialized successfully.');
   } catch (err) {
     logerror('Failed to initialize database:', err);
