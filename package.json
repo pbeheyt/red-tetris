@@ -15,7 +15,6 @@
     "lint": "eslint . --ext .vue,.js --fix"
   },
   "dependencies": {
-    "ai-digest": "^1.5.1",
     "debug": "^4.3.5",
     "express": "^4.19.2",
     "pinia": "^2.2.2",
